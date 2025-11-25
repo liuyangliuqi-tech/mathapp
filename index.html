@@ -130,7 +130,7 @@
             100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
         }
         
-        /* --- 模态框通用样式 (保持不变) --- */
+        /* --- 模态框通用样式 (已修复) --- */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
@@ -156,10 +156,10 @@
             font-size: clamp(15px, 2.5vw, 18px); 
             line-height: 1.6;
             padding-left: 10px; 
-            border-left: 4px solid var(--color-apple-blue); /* 修复：还原边框样式 */
+            border-left: 4px solid var(--color-apple-blue); 
             transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
         }
-        .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; } /* 修复：标题单独一行，加粗 */
+        .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; } 
         .modal-step.fade-start { opacity: 0; transform: translateY(10px); }
         .modal-step.fade-end { opacity: 1; transform: translateY(0); }
         
@@ -168,7 +168,7 @@
         .highlight-goal { color: var(--color-apple-green); font-weight: 700; } 
         .highlight-remain { color: var(--color-apple-blue); font-weight: 700; } 
         
-        /* 公式样式优化 (已修复，更紧凑，突出颜色) */
+        /* 公式样式优化 */
         .formula { 
             font-size: clamp(18px, 3.5vw, 24px); 
             font-weight: 800; 
@@ -191,9 +191,8 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* --- 成绩单样式 (上次已修复，用于答案不重叠和截图) --- */
+        /* --- 成绩单样式 --- */
         
-        /* 保持 #examReportContent 外层容器的特殊设置，以确保 html2canvas 捕获整张试卷 */
         #examReportContent {
             padding-bottom: 20px; 
             position: relative; 
@@ -226,7 +225,6 @@
         }
         .problem-list { margin-top: 10px; list-style: none; padding: 0; }
         
-        /* 重点：解决数字重叠问题的 Grid 布局 */
         .problem-item { 
             display: grid; 
             grid-template-columns: 2fr 1fr 1fr 50px; 
@@ -256,7 +254,6 @@
             text-align: center;
         }
         
-        /* 灯泡和标记组 */
         .problem-mark-group {
             display: flex;
             align-items: center;
@@ -312,7 +309,6 @@
             background-color: var(--color-apple-green); 
             color: white;
         }
-        /* 隐藏打印按钮，只在生成图片时才隐藏 */
         .hide-for-capture { display: none; }
 
     </style>
@@ -392,18 +388,16 @@
         let examProblems = []; 
         let isSubmitting = false; 
         const MAX_GENERATION_ATTEMPTS = 50; 
-        let currentMode = 'jieShi'; // 存储当前模式，用于辅助提示逻辑判断
+        let currentMode = 'jieShi'; 
 
-        // --- 元素 ID 查找 (精简合并) ---
+        // --- 元素 ID 查找 ---
         const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal] = 
             ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal'].map(id => document.getElementById(id));
-        const [examModalClose, hintModalClose, examModalTitle, examModalContent, hintModalTitle, hintModalSteps] =
-            ['examModalClose', 'hintModalClose', 'examModalTitle', 'examModalContent', 'hintModalTitle', 'hintModalSteps'].map(id => document.getElementById(id));
+        const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps] =
+            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps'].map(id => document.getElementById(id));
         const examReportContent = document.getElementById('examReportContent'); 
 
-        // --- 辅助函数 (略) ---
-        function playSound(isCorrect) { /* 暂时禁用音频 */ }
-
+        // --- 辅助函数 ---
         function vfx() {
             vfxCont.innerHTML = ''; 
             for (let i = 0; i < 15; i++) {
@@ -427,7 +421,6 @@
         const opRedSpan = (op) => `<span class="op-red">${op}</span>`;
         const numRedSpan = (num) => `<span class="num-red">${num}</span>`;
         const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
-        // 修复：步骤内容结构
         const stepContent = (title, content) => `<strong>${title}</strong>${content}`; 
 
 
@@ -449,8 +442,8 @@
             examModal.style.display = 'none';
         }
 
-        // --- 提示步骤逻辑 (借十法/凑十法/平十法 重点优化和统一) ---
-        function getSingleOpHintSteps(n1, n2, op) {
+        // --- 提示步骤逻辑 (加入了智能判断的逻辑) ---
+        function getSingleOpHintSteps(n1, n2, op, forcedMode = null) {
             let s = '', t = '', res = op === '+' ? n1 + n2 : n1 - n2;
             let formulaHTML = ''; 
             const tSpan = numSpan(10, 'highlight-goal'); 
@@ -459,6 +452,9 @@
             const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
             const u1 = n1 % 10;
             
+            // 决定使用的模式：优先使用强制模式，其次使用当前模式
+            const effectiveMode = forcedMode || currentMode;
+
             // 默认设置为基础运算
             t = '基础加减法'; 
             s = `<div class="modal-step">${stepContent('直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
@@ -470,6 +466,7 @@
             if (op === '+') {
                 const u2 = n2 % 10;
                 if (res > 10 && u1 + u2 > 10) { 
+                    // 满足凑十法条件，即使当前模式不是凑十，也认为这是最合适的
                     const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
                     const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
                     const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
@@ -481,54 +478,61 @@
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
                 }
             } else { // 减法 (破十法)
+                const isBreakTen = n1 > 10 && n2 > u1;
 
-                // **🎯 2. 平十法逻辑** (先减个位，再减剩余)
-                if (currentMode === 'pingShi' && n1 > 10 && n2 > u1) {
-                     const rem = n2 - u1; 
-                     const tenRem = n1 - u1; 
-                     t = '📏 平十法 (连减法)';
-                     const [u1Span, remSpan, n2Span, tenRemSpan] = [numSpan(u1, 'highlight-ten'), numSpan(rem, 'highlight-remain'), numSpan(n2, 'highlight-ten'), numSpan(tenRem, 'highlight-goal')];
-                     s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Span} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
-                     s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
-                     s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
-                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
-                
-                // **⚡ 3. 借十法逻辑** (破十法 / 标准减法)
-                } else if (currentMode === 'jieShi' && n1 > 10 && n2 > u1) { 
-                    const tMinusN2 = 10 - n2;
-                    t = '⚡ 借十法 (破十法)';
-                    const [u1Span, tMinusN2Span, n2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal'), numSpan(n2, 'highlight-ten')];
-                    s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Span}！借一个 ${tSpan} 来帮忙！`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Span}，剩下 ${tMinusN2Span} 个。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
-                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
-                
+                if (isBreakTen) {
+                    // 满足破十法条件，此时根据 effectiveMode 决定使用平十法或借十法
+                    
+                    if (effectiveMode === 'pingShi' || forcedMode) { // 优先使用平十法 (或被强制指定)
+                         const rem = n2 - u1; 
+                         const tenRem = n1 - u1; 
+                         t = '📏 平十法 (连减法)';
+                         const [u1Span, remSpan, n2Span, tenRemSpan] = [numSpan(u1, 'highlight-ten'), numSpan(rem, 'highlight-remain'), numSpan(n2, 'highlight-ten'), numSpan(tenRem, 'highlight-goal')];
+                         s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
+                         s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
+                         s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
+                         formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                    
+                    } else { // 使用借十法 (默认模式或被强制指定)
+                        const tMinusN2 = 10 - n2;
+                        t = '⚡ 借十法 (破十法)';
+                        const [u1Span, tMinusN2Span, n2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal'), numSpan(n2, 'highlight-ten')];
+                        s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
+                        s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
+                        s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
+                        formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
+                    
+                    }
                 }
             }
             return { title: t, stepsHTML: s, formula: formulaHTML }; 
         }
 
-        // --- 模态框和报告逻辑 (使用修复后的 stepContent 函数) ---
+        // --- 模态框和报告逻辑 (重点修改 generateHintSteps) ---
         function generateHintSteps(problem, problemIndex = null) {
             const { num1, num2, operator1, num3, operator2, answer } = problem;
             let s = '', finalFormula = '';
             hintModal.style.display = 'block';
             
             if (num3 !== null && num3 !== undefined) {
-                // 三步运算
+                // --- 连续运算 (三步题) 逻辑修改 ---
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
-                const fSD = getSingleOpHintSteps(num1, num2, operator1);
                 
-                hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${fSD.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
-                // 修复：使用修复后的 stepContent 结构
+                // 1. 获取第一步的智能提示 (根据当前模式或最合适方法)
+                const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, currentMode); // 传入 currentMode
+
+                hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
+                
+                // 添加第一步的标题和步骤
                 s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`; 
-                s += fSD.stepsHTML; 
+                s += firstStepDetails.stepsHTML; // 使用智能生成的步骤
                 s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
                 
-                const sSD = getSingleOpHintSteps(iR, num3, operator2);
-                // 修复：使用修复后的 stepContent 结构
-                s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${sSD.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
-                s += sSD.stepsHTML; 
+                // 2. 获取第二步的智能提示
+                const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, currentMode); // 传入 currentMode
+
+                s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
+                s += secondStepDetails.stepsHTML; // 使用智能生成的步骤
                 finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
                 
             } else {
@@ -589,7 +593,7 @@
             });
         }
 
-        // **报告生成逻辑 (保持不变，已修复重叠问题)**
+        // **报告生成逻辑 (保持不变)**
         function endExam() {
             submitBtn.disabled = true; 
             isSubmitting = false; 
