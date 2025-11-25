@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>刘书语的魔法数学特训营</title> 
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+    <meta name="apple-mobile-web-app-title" content="数学特训营">
+    
+    <style>
+        /* 样式代码保持不变，以确保功能和外观一致 */
+        * { touch-action: manipulation; box-sizing: border-box; }
+        :root {
+            --color-apple-blue: #007aff; --color-apple-green: #34c759; 
+            --color-apple-red: #ff3b30; --color-apple-orange: #ff9500; 
+            --color-background-soft: #f2f2f7; --color-card-bg: #f7f7f9;
+            --color-text-dark: #1d1d1f; --color-button-secondary: #e5e5ea;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-background-soft); color: var(--color-text-dark);
+            margin: 0; padding: 0; display: flex; justify-content: center; 
+            min-height: 100vh; padding-bottom: 20px; -webkit-text-size-adjust: 100%; 
+        }
+        .container {
+            width: 100%; max-width: 900px; background-color: #ffffff; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); padding: 2vh 4vw; 
+            text-align: center; display: flex; flex-direction: column; 
+            align-items: center; min-height: 100vh; 
+        }
+        .header-section { width: 100%; flex-shrink: 0; padding-top: 1vh; display: flex; flex-direction: column; align-items: center; }
+        h1 { font-size: clamp(24px, 3.5vw, 32px); font-weight: 700; margin-bottom: 0.5vh; }
+        .tagline { font-size: clamp(14px, 2vw, 16px); color: #555; margin-bottom: 1.5vh; }
+        .mode-switch-group { width: 90%; max-width: 500px; margin-bottom: 2vh; }
+        .mode-select {
+            width: 100%; padding: 1.5vh 12px; font-size: clamp(14px, 2.2vw, 16px);
+            border-radius: 10px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08); 
+            appearance: none; -webkit-appearance: none; -moz-appearance: none; border: 1px solid #ccc;
+        }
+        .score-board {
+            display: flex; justify-content: space-around; margin-top: 1vh; margin-bottom: 2.5vh; 
+            padding: 1.5vh 10px; background-color: var(--color-card-bg); border-radius: 12px; 
+            width: 80%; max-width: 500px;
+        }
+        .score-item { font-size: clamp(14px, 2.5vw, 16px); font-weight: 500; }
+        .score-item span { color: var(--color-apple-blue); font-weight: 700; }
+        .main-calculation-area { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            width: 100%; padding-top: 2vh; padding-bottom: 2vh; position: relative; 
+        }
+        .math-problem { 
+            font-size: 11vw; font-weight: 800; margin: 1vh 0; min-height: 15vw; 
+            display: flex; justify-content: center; align-items: center; gap: 15px;
+        }
+        .math-problem.three-op { font-size: 8vw; }
+        @media (max-width: 600px) {
+            .math-problem { font-size: 15vw; gap: 10px; }
+            .math-problem.three-op { font-size: 10vw; }
+        }
+        .input-wrapper { 
+            margin-top: 4vh; margin-bottom: 5vh; display: flex; flex-wrap: wrap; 
+            justify-content: center; gap: 10px; width: 100%; max-width: 400px; 
+        }
+        #answerInput { 
+            padding: 2vh 15px; font-size: clamp(20px, 3.5vw, 24px); border-radius: 10px; 
+            margin-bottom: 10px; width: clamp(150px, 40vw, 200px); transition: all 0.2s; 
+            border: 1px solid #ccc; text-align: center;
+        }
+        .wrong-flash {
+            border: 2px solid var(--color-apple-red) !important;
+            box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        #newProblemButton {
+            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
+            background-color: var(--color-button-secondary); color: var(--color-text-dark);
+            border-radius: 10px; border: none; cursor: pointer; transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
+        }
+        @media (min-width: 601px) {
+             #newProblemButton.icon-mode {
+                 position: absolute; top: 50%; right: 5%; transform: translateY(-50%);
+                 padding: 10px; font-size: 20px; border-radius: 50%; width: 40px; height: 40px;
+                 display: flex; align-items: center; justify-content: center;
+                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); opacity: 0.8; z-index: 10;
+             }
+             #newProblemButton .button-text { display: none; }
+        }
+        #submitButton, #hintButton { 
+            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
+            border-radius: 10px; border: none; cursor: pointer; 
+            transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
+        }
+        #submitButton { background-color: var(--color-apple-blue); color: white; }
+        #hintButton { background-color: var(--color-apple-orange); color: var(--color-text-dark); }
+        
+        /* 禁用状态样式 */
+        #hintButton:disabled, #newProblemButton:disabled, #submitButton:disabled {
+            opacity: 0.5; 
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .input-wrapper { flex-direction: column; align-items: center; padding: 0 5%; max-width: 100%; }
+            #answerInput { width: 100%; max-width: 250px; }
+            #submitButton, #hintButton, #newProblemButton { 
+                width: 100%; max-width: 250px; margin-bottom: 5px; position: static; transform: none; padding: 2vh 4vw; 
+            }
+            #newProblemButton .button-text { display: inline-block; }
+        }
+        #feedback { font-size: clamp(18px, 3vw, 22px); font-weight: 700; color: var(--color-text-dark); min-height: 4vh; }
+        .feedback-correct { color: var(--color-apple-green); }
+        .feedback-wrong { color: var(--color-apple-red); }
+        .vfx-container {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 1px; height: 1px; pointer-events: none; overflow: visible; z-index: 50; 
+        }
+        .correct-vfx {
+            position: absolute; font-size: 20px; color: gold; text-shadow: 0 0 5px orange;
+            animation: flyout 1s ease-out forwards; opacity: 0;
+        }
+        @keyframes flyout {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            25% { opacity: 1; }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
+        }
+        
+        /* 模态框通用样式 */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
+        }
+        #hintModal { z-index: 1050; } 
+        
+        .modal-content {
+            background-color: #ffffff; margin: 10vh auto; padding: 3vh 4vw; border-radius: 20px; 
+            width: 90%; max-width: 600px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); 
+            animation: modalopen 0.4s ease-out; text-align: left; max-height: 75vh; 
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+        }
+        .modal-title { font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--color-text-dark); margin-bottom: 2vh; border-bottom: 2px solid #ddd; padding-bottom: 1vh; }
+        .modal-close { float: right; font-size: clamp(24px, 5vw, 32px); font-weight: 300; cursor: pointer; color: #888; transition: color 0.2s; }
+        
+        /* 步骤样式 */
+        .modal-step {
+            margin-bottom: 2vh; 
+            font-size: clamp(15px, 2.5vw, 18px); 
+            line-height: 1.6;
+            padding-left: 10px; 
+            border-left: 4px solid var(--color-apple-blue); 
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
+        }
+        .modal-step.fade-start { opacity: 0; transform: translateY(10px); }
+        .modal-step.fade-end { opacity: 1; transform: translateY(0); }
+        .modal-step strong { display: inline; margin-bottom: 0; font-weight: 800; } 
+        
+        /* 强调色定义 */
+        .highlight-ten { color: var(--color-apple-orange); font-weight: 700; } 
+        .highlight-goal { color: var(--color-apple-green); font-weight: 700; } 
+        .highlight-remain { color: var(--color-apple-blue); font-weight: 700; } 
+        
+        /* 公式样式优化: 移出步骤，独立展示 */
+        .modal-step + .formula, .formula { 
+            font-size: clamp(18px, 3.5vw, 24px); font-weight: 800; color: var(--color-text-dark); 
+            display: block; margin-top: 2vh; margin-bottom: 2vh; text-align: center; background-color: var(--color-card-bg);
+            padding: 1.5vh; border-radius: 10px; letter-spacing: 1px; box-shadow: 0 0 3px rgba(0, 0, 0, 0.05);
+        }
+        .formula .op-red { color: var(--color-apple-red); }
+        .formula .num-red { color: var(--color-apple-red); }
+
+        @keyframes modalopen {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* --- 成绩单样式 --- */
+        .exam-report {
+            border: 2px solid #ccc; border-radius: 15px; padding: 20px;
+            background-color: #fff; position: relative;
+        }
+        .report-header { text-align: center; margin-bottom: 20px; }
+        .report-header h3 { 
+            font-size: 28px; font-weight: 800; color: var(--color-text-dark); 
+            margin: 0; border-bottom: 3px double #333; padding-bottom: 5px;
+        }
+        .info-row { 
+            display: flex; justify-content: space-between; font-size: 16px; 
+            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px dashed #ddd; 
+        }
+        .info-item span { font-weight: 700; color: var(--color-apple-blue); }
+
+        .score-box {
+            position: absolute; top: 10px; right: 20px; 
+            width: 80px; height: 80px; border: 2px solid var(--color-apple-red);
+            border-radius: 5px; display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800; color: var(--color-apple-red);
+            line-height: 1;
+        }
+        .problem-list { margin-top: 10px; list-style: none; padding: 0; }
+        .problem-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 0; border-bottom: 1px dotted #eee; font-size: 18px; 
+        }
+        .problem-text { 
+            font-weight: 500; 
+            color: var(--color-text-dark); 
+            width: 60%; 
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* 灯泡和标记组 */
+        .problem-mark-group {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+            width: 40%; 
+            justify-content: flex-end; 
+            gap: 8px; 
+        }
+        .btn-hint-review {
+            order: 2; 
+            background-color: var(--color-apple-orange);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            line-height: 30px;
+            padding: 0;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+        .problem-mark { 
+            order: 3; 
+            font-size: 40px; 
+            font-weight: 900; 
+            font-family: Arial, sans-serif; 
+            line-height: 1;
+            margin-left: 5px; 
+        }
+        .mark-wrong { color: #ff3b30; } 
+        .correct-answer { 
+            order: 1; 
+            color: var(--color-apple-blue); 
+            font-weight: 700; 
+            font-size: 14px; 
+            flex-shrink: 0;
+        }
+
+        /* 按钮组样式 */
+        .report-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .report-actions button {
+            padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 16px; font-weight: 600; transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: var(--color-apple-blue); 
+            color: white; 
+        }
+        .btn-secondary {
+            background-color: var(--color-apple-orange); 
+            color: white;
+        }
+        .btn-download {
+            background-color: var(--color-apple-green); 
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>🥳 刘书语的魔法数学特训营</h1>
+            <p class="tagline">🥇 成为全班数学小冠军！ (一年级方法专项练习)</p>
+            <div class="mode-switch-group">
+                <div class="select-wrapper">
+                    <select id="modeSelect" class="mode-select">
+                        <optgroup label="基础练习模式">
+                            <option value="add">基础加法 (+)</option>
+                            <option value="sub">基础减法 (-)</option>
+                            <option value="mixed">混合练习 (±)</option>
+                            <option value="continuous">🔥 连续运算 (三步)</option>
+                        </optgroup>
+                        <optgroup label="专项方法练习 (仅限加减)">
+                            <option value="couShi">🎯 凑十法 (加法)</option>
+                            <option value="jieShi" selected>🎯 借十法 (破十法) (减法)</option>
+                            <option value="pingShi">🎯 平十法 (减法)</option>
+                        </optgroup>
+                        <optgroup label="考试与挑战">
+                            <option value="exam">💯 10题快速考试</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="score-board">
+                <div class="score-item">正确: <span id="correctCount">0</span></div>
+                <div class="score-item">错误: <span id="wrongCount">0</span></div>
+                <div class="score-item">总数: <span id="totalCount">0</span></div>
+            </div>
+        </div>
+        <div class="main-calculation-area">
+            <div class="math-problem" id="mathProblemDisplay">
+                <span id="number1">?</span><span id="operator1" class="operator">?</span>
+                <span id="number2">?</span><span id="operator2"></span> 
+                <span id="number3"></span><span>=</span><span>?</span>
+            </div>
+            <div id="vfxContainer" class="vfx-container"></div>
+            <button id="newProblemButton">🔄 <span class="button-text">换题</span></button>
+            <div class="input-wrapper">
+                <input type="number" id="answerInput" placeholder="请输入答案" inputmode="numeric">
+                <button id="submitButton">提交</button>
+                <button id="hintButton">💡 提示</button>
+            </div>
+        </div>
+        <div id="feedback"></div>
+    </div>
+    
+    <div id="examModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="examModalClose">&times;</span>
+            <div id="examModalTitle" class="modal-title"></div>
+            <div id="examModalContent"></div>
+        </div>
+    </div>
+
+    <div id="hintModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="hintModalClose">&times;</span>
+            <div id="hintModalTitle" class="modal-title"></div>
+            <div id="hintModalSteps"></div>
+        </div>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script>
+        // --- 变量和状态初始化 ---
+        let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [] }; 
+        let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 20;
+        let isExamMode = false; const EXAM_TOTAL_QUESTIONS = 10;
+        let examCurrentQuestion = 0, examCorrectAnswers = 0; 
+        let examProblems = []; 
+        let isSubmitting = false; 
+        const MAX_GENERATION_ATTEMPTS = 50; 
+        let currentMode = 'jieShi'; // 存储当前模式，用于辅助提示逻辑判断
+
+        // --- 元素 ID 查找 (精简合并) ---
+        const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal] = 
+            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal'].map(id => document.getElementById(id));
+        const [examModalClose, hintModalClose, examModalTitle, examModalContent, hintModalTitle, hintModalSteps] =
+            ['examModalClose', 'hintModalClose', 'examModalTitle', 'examModalContent', 'hintModalTitle', 'hintModalSteps'].map(id => document.getElementById(id));
+
+        // --- 辅助函数 (略) ---
+        function playSound(isCorrect) { /* 暂时禁用音频 */ }
+
+        function vfx() {
+            vfxCont.innerHTML = ''; 
+            for (let i = 0; i < 15; i++) {
+                const v = document.createElement('div');
+                v.className = 'correct-vfx'; v.textContent = '⭐'; 
+                const angle = Math.random() * 2 * Math.PI;
+                const distance = 80 + Math.random() * 50; 
+                v.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+                v.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+                v.style.transform = `translate(${(Math.random() - 0.5) * 20}px, ${(Math.random() - 0.5) * 20}px)`;
+                vfxCont.appendChild(v);
+                v.addEventListener('animationend', () => v.remove());
+            }
+        }
+        function wrongFlash() {
+            ansInput.classList.add('wrong-flash');
+            setTimeout(() => ansInput.classList.remove('wrong-flash'), 500);
+        }
+        
+        const numSpan = (num, className) => `<span class="${className}">${num}</span>`;
+        const opRedSpan = (op) => `<span class="op-red">${op}</span>`;
+        const numRedSpan = (num) => `<span class="num-red">${num}</span>`;
+        const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
+        const stepContent = (title, content) => `<strong>${title}</strong><br>${content}`;
+
+
+        function switchMode(newMode) {
+            currentMode = newMode; // 更新当前模式
+            isExamMode = newMode === 'exam';
+            if (isExamMode) {
+                examCurrentQuestion = 0; examCorrectAnswers = 0; examProblems = []; 
+                correctCount = 0; wrongCount = 0;
+            } else if (modeSelect.value === 'exam') {
+                correctCount = 0; wrongCount = 0; totalCount = 0;
+            }
+            modeSelect.value = newMode; // 确保 modeSelect 值正确
+            cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
+            newProbBtn.disabled = isExamMode; 
+            hintBtn.disabled = isExamMode; 
+            submitBtn.disabled = false;
+            generateProblem(true);
+            examModal.style.display = 'none';
+        }
+
+        // --- 提示步骤逻辑 (借十法/凑十法/平十法 重点优化和统一) ---
+        function getSingleOpHintSteps(n1, n2, op) {
+            let s = '', t = '', res = op === '+' ? n1 + n2 : n1 - n2;
+            let formulaHTML = ''; 
+            const tSpan = numSpan(10, 'highlight-goal'); 
+            const big = op === '+' ? Math.max(n1, n2) : n1;
+            const small = op === '+' ? Math.min(n1, n2) : n2;
+            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+            const u1 = n1 % 10;
+            
+            // 默认设置为基础运算，如果满足专项方法条件则覆盖
+            t = '基础加减法'; 
+            s = `<div class="modal-step">${stepContent('直接计算', `${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
+            formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+
+            // --- 专项方法逻辑 ---
+
+            // 1. 凑十法 (加法)
+            if (op === '+') {
+                const u2 = n2 % 10;
+                // 凑十法条件：相加和大于10，且个位相加大于10
+                if (res > 10 && u1 + u2 > 10) { 
+                    const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
+                    const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
+                    const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
+                    const nextTen = big + need, nextTenSpan = numSpan(nextTen, 'highlight-goal');
+                    t = '✨ 凑十法魔法拆分';
+                    s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${needSpan} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 2: 小数拆分', `✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 3: 魔法合体', `🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                }
+            } else { // 减法 (破十法)
+
+                // **🎯 2. 平十法逻辑** (先减个位，再减剩余)
+                // 只有当用户显式选择 'pingShi' 模式，并且题目满足破十条件时才显示此提示。
+                if (currentMode === 'pingShi' && n1 > 10 && n2 > u1) {
+                     const rem = n2 - u1; // 减数 N2 拆分成 u1 和 rem
+                     const tenRem = n1 - u1; // 15 - 5 = 10
+                     t = '📏 平十法 (连减法)';
+                     const [u1Span, remSpan, n2Span, tenRemSpan] = [numSpan(u1, 'highlight-ten'), numSpan(rem, 'highlight-remain'), numSpan(n2, 'highlight-ten'), numSpan(tenRem, 'highlight-goal')];
+                     s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `✂️ 把 ${n2Span} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
+                     s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
+                     s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
+                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                
+                // **⚡ 3. 借十法逻辑** (破十法 / 标准减法)
+                // 只有当用户显式选择 'jieShi' 模式，并且题目满足破十条件时才显示此提示。
+                } else if (currentMode === 'jieShi' && n1 > 10 && n2 > u1) { 
+                    const tMinusN2 = 10 - n2;
+                    t = '⚡ 借十法 (破十法)';
+                    const [u1Span, tMinusN2Span, n2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal'), numSpan(n2, 'highlight-ten')];
+                    s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Span}！借一个 ${tSpan} 来帮忙！`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `💪 先让借来的 ${tSpan} 打败 那个 ${n2Span}，剩下 ${tMinusN2Span} 个。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
+                
+                }
+            }
+            return { title: t, stepsHTML: s, formula: formulaHTML }; 
+        }
+
+        // --- 模态框和报告逻辑 (保持不变) ---
+        function generateHintSteps(problem, problemIndex = null) {
+            const { num1, num2, operator1, num3, operator2, answer } = problem;
+            let s = '', finalFormula = '';
+            hintModal.style.display = 'block';
+            
+            if (num3 !== null && num3 !== undefined) {
+                // 三步运算 (三步运算的提示逻辑仍使用基础判断)
+                const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
+                const fSD = getSingleOpHintSteps(num1, num2, operator1);
+                
+                hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${fSD.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
+                s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `${num1} ${operator1} ${num2}`)}</div>`;
+                s += fSD.stepsHTML; 
+                s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
+                
+                const sSD = getSingleOpHintSteps(iR, num3, operator2);
+                s += `<div class="modal-step">${stepContent('第二步计算', `${iR} ${operator2} ${num3} (方法：${sSD.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
+                s += sSD.stepsHTML; 
+                finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
+                
+            } else {
+                // 单步运算
+                const details = getSingleOpHintSteps(num1, num2, operator1);
+                hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
+                s = details.stepsHTML;
+                finalFormula = details.formula;
+            }
+            
+            hintModalSteps.innerHTML = s + finalFormula; 
+            const steps = hintModalSteps.querySelectorAll('.modal-step');
+            steps.forEach(step => step.classList.add('fade-start')); 
+            steps.forEach((step, index) => {
+                setTimeout(() => { step.classList.remove('fade-start'); step.classList.add('fade-end'); }, 100 + index * 450);
+            });
+        }
+        
+        const closeHintModal = () => { hintModal.style.display = 'none'; };
+        const closeExamModal = () => { examModal.style.display = 'none'; switchMode(modeSelect.value); };
+        const showCurrentHint = () => {
+            if (isExamMode) { feedbackEl.textContent = '考试中不能使用提示哦！'; wrongFlash(); return; }
+            generateHintSteps(currentProblem);
+        };
+        const showProblemHint = (index) => {
+            const problemData = examProblems[index];
+            if (problemData) generateHintSteps(problemData, index);
+        };
+        
+        function generateReportImage() {
+            const reportEl = document.getElementById('examReportContent');
+            if (typeof html2canvas === 'undefined' || !html2canvas) { alert('图片生成库加载失败。'); return; }
+            
+            const hintButtons = reportEl.querySelectorAll('.btn-hint-review');
+            hintButtons.forEach(btn => btn.style.display = 'none');
+
+            html2canvas(reportEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                hintButtons.forEach(btn => btn.style.display = 'block');
+                const imgURL = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = imgURL;
+                const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
+                const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ''); 
+                a.download = `数学测试成绩_${score.toFixed(0)}分_${today}.png`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }).catch(error => {
+                hintButtons.forEach(btn => btn.style.display = 'block');
+                console.error('Error generating image:', error);
+                alert('生成图片失败。');
+            });
+        }
+
+        function endExam() {
+            submitBtn.disabled = true; 
+            isSubmitting = false; 
+            
+            const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
+            const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+            
+            examModalTitle.textContent = '💯 数学快速测试卷';
+            
+            let problemListHTML = examProblems.map((p, index) => {
+                const correctAnswerDisplay = (p.answer === undefined || p.answer === null || isNaN(p.answer)) ? '??' : p.answer;
+                const problemText = `${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
+                const isCorrect = p.userAnswer === p.answer; 
+                const [mark, markClass] = isCorrect ? ['✔️', ''] : ['❌', 'mark-wrong'];
+                const userAnswerDisplay = p.userAnswer === undefined || p.userAnswer === null || isNaN(p.userAnswer) ? '?' : p.userAnswer;
+                const userAnswerColor = isCorrect ? 'var(--color-text-dark)' : 'var(--color-apple-red)'; 
+                
+                return `
+                    <li class="problem-item">
+                        <span class="problem-text">
+                            <span>${index + 1}. ${problemText} ${opRedSpan('=')}</span>
+                            <span style="font-weight: 700; color: ${userAnswerColor};">${userAnswerDisplay}</span>
+                        </span>
+                        <div class="problem-mark-group">
+                            ${!isCorrect ? `<span class="correct-answer"> (正: ${correctAnswerDisplay})</span>` : ''}
+                            ${!isCorrect ? `<button onclick="showProblemHint(${index});" class="btn-hint-review">💡</button>` : ''} 
+                            <span class="problem-mark ${markClass}" style="color: ${isCorrect ? 'var(--color-apple-green)' : 'var(--color-apple-red)'};">${mark}</span>
+                        </div>
+                    </li>`;
+            }).join('');
+            
+            examModalContent.innerHTML = `
+                <div class="exam-report" id="examReportContent" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="score-box">${score.toFixed(0)}</div>
+                    <div class="report-header"><h3>小学一年级数学测试</h3></div>
+                    <div class="info-row">
+                        <div class="info-item">姓名：<span>刘书语</span></div>
+                        <div class="info-item">班级：<span>魔法一班</span></div>
+                        <div class="info-item">日期：<span>${today}</span></div>
+                    </div>
+                    
+                    <h4 style="border-left: 5px solid var(--color-apple-blue); padding-left: 10px; margin-top: 20px;">一、计算题 (${EXAM_TOTAL_QUESTIONS} 题)</h4>
+                    <ul class="problem-list">${problemListHTML}</ul>
+                    <div class="report-actions">
+                        <button onclick="generateReportImage();" class="btn-download">📸 生成成绩单图片</button>
+                        <button onclick="examModal.style.display='none'; switchMode('exam');" class="btn-primary">再考一次 (10题)</button>
+                        <button onclick="examModal.style.display='none'; switchMode('mixed');" class="btn-secondary">返回练习模式</button>
+                    </div>
+                </div>`;
+
+            examModal.style.display = 'block'; 
+            newProbBtn.disabled = false; hintBtn.disabled = false;
+            feedbackEl.textContent = `考试结束，得分 ${score.toFixed(0)} 分`; feedbackEl.className = 'feedback-correct';
+        }
+
+        // --- 答案检查和问题生成 (逻辑保持不变) ---
+        const checkAnswer = () => {
+            if (isSubmitting || (isExamMode && examCurrentQuestion >= EXAM_TOTAL_QUESTIONS)) { return; }
+
+            const uA = parseInt(ansInput.value.trim());
+            const eA = currentProblem.answer;
+            
+            if (isNaN(uA)) { feedbackEl.textContent = '请先输入数字答案！'; wrongFlash(); return; }
+            ansInput.classList.remove('wrong-flash');
+            
+            isSubmitting = true; 
+            submitBtn.disabled = true; 
+            const problemSnapshot = { ...currentProblem, userAnswer: uA }; 
+
+            if (isExamMode) {
+                const isC = uA === eA;
+                if (isC) examCorrectAnswers++;
+                examProblems.push(problemSnapshot); 
+                examCurrentQuestion++;
+
+                setTimeout(() => { 
+                    if (examCurrentQuestion < EXAM_TOTAL_QUESTIONS) { 
+                        generateProblem(true);
+                        isSubmitting = false; 
+                        submitBtn.disabled = false; // 考试模式下一题开始时启用
+                    } else { 
+                        endExam(); 
+                    }
+                }, 500); 
+            } else {
+                totalCount++;
+                if (uA === eA) {
+                    correctCount++; feedbackEl.textContent = '✅ 太棒了！回答正确！ 🎉'; feedbackEl.className = 'feedback-correct';
+                    vfx();
+                    setTimeout(() => { 
+                        submitBtn.disabled = false; // 修复点：正确答题后重新启用提交按钮
+                        generateProblem(true);
+                        isSubmitting = false; 
+                    }, 2000);
+                } else {
+                    wrongCount++; feedbackEl.textContent = `❌ 错了，正确答案是 ${eA} ❌`; feedbackEl.className = 'feedback-wrong'; wrongFlash();
+                    isSubmitting = false; 
+                    submitBtn.disabled = false; // 错误答题后立即启用提交按钮
+                }
+                cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
+            }
+        };
+        
+        const skipProblem = () => { feedbackEl.textContent = ''; feedbackEl.className = ''; generateProblem(false); }
+        
+        function setButtonMode() {
+            const isMobile = window.matchMedia("(max-width: 600px)").matches;
+            const btnTxt = newProbBtn.querySelector('.button-text');
+            if (btnTxt) {
+                newProbBtn.classList.toggle('icon-mode', !isMobile);
+                btnTxt.style.display = isMobile ? 'inline-block' : 'none';
+            }
+        }
+        
+        function generateProblem(shouldFocus = false) { 
+            let n1, n2, op1, n3 = null, op2 = null, res = null;
+            // 考试模式下随机选择模式，否则使用当前选择的模式
+            let generatorMode = isExamMode ? ['add', 'sub', 'mixed', 'continuous', 'couShi', 'jieShi', 'pingShi'][Math.floor(Math.random() * 7)] : modeSelect.value;
+            let attempts = 0; 
+            let generatedSuccessfully = false; 
+
+            if (isExamMode) submitBtn.disabled = false;
+            
+            mathProbDispEl.classList.remove('three-op'); op2El.textContent = ''; n3El.textContent = '';
+            
+            while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
+                attempts++;
+                n3 = null; op2 = null; res = null;
+                
+                if (generatorMode === 'continuous') {
+                    // 连续运算：确保每一步结果都在 [0, maxNum] 范围内
+                    op1 = Math.random() < 0.5 ? '+' : '-'; n1 = 10 + Math.floor(Math.random() * 10);
+                    let n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
+                    n2 = 1 + Math.floor(Math.random() * n2Range);
+                    let iR = op1 === '+' ? n1 + n2 : n1 - n2;
+                    
+                    op2 = Math.random() < 0.5 ? '+' : '-';
+                    if (op2 === '+') { 
+                        n3 = 1 + Math.floor(Math.random() * (maxNum - iR)); res = iR + n3; 
+                    } else { 
+                        n3 = 1 + Math.floor(Math.random() * iR); res = iR - n3; 
+                    }
+                    if (res !== null && res <= maxNum && res >= 0) { 
+                        mathProbDispEl.classList.add('three-op'); op2El.textContent = op2; n3El.textContent = n3;
+                        generatedSuccessfully = true;
+                    }
+                } else if (generatorMode === 'couShi') {
+                    // 凑十法 (加法)：确保相加和大于10，且个位相加大于10
+                    op1 = '+'; 
+                    n1 = 7 + Math.floor(Math.random() * 10); // 7-16
+                    let need = 10 - (n1 % 10);
+                    n2 = need + 1 + Math.floor(Math.random() * (9 - need)); // 确保拆分
+                    if (n1 + n2 > maxNum) continue; // 超出范围重新生成
+                    res = n1 + n2;
+                    if (res > 10 && (n1 % 10) + (n2 % 10) > 10 && res <= maxNum) generatedSuccessfully = true;
+                } else if (generatorMode === 'pingShi' || generatorMode === 'jieShi') {
+                    // 平十法/借十法 (减法)：都用于破十法，条件一致
+                    op1 = '-'; 
+                    n1 = 11 + Math.floor(Math.random() * 8); // 11-19
+                    let uD = n1 % 10; 
+                    n2 = uD + 1 + Math.floor(Math.random() * (9 - uD)); // 减数大于个位
+                    if (n2 >= n1) n2 = n1 - 1; 
+                    res = n1 - n2;
+                    // 确保是破十法题目 (减数大于个位)
+                    if (n1 > 10 && n2 > uD && res > 0) generatedSuccessfully = true;
+                } else { 
+                    // 基础加/减/混合
+                    op1 = generatorMode === 'mixed' ? (Math.random() < 0.5 ? '+' : '-') : (generatorMode === 'add' ? '+' : '-');
+                    if (op1 === '+') { 
+                        n1 = Math.floor(Math.random() * (maxNum + 1)); 
+                        n2 = Math.floor(Math.random() * (maxNum + 1 - n1)); 
+                    } else { 
+                        n1 = 10 + Math.floor(Math.random() * 11); 
+                        n2 = Math.floor(Math.random() * (n1 + 1)); 
+                    }
+                    res = op1 === '+' ? n1 + n2 : n1 - n2;
+                    // 排除专项模式已覆盖的，除非在混合模式下
+                    if ((generatorMode !== 'mixed') && (
+                        (op1 === '+' && res > 10 && (n1 % 10) + (n2 % 10) > 10) || // 凑十法
+                        (op1 === '-' && n1 > 10 && n2 > (n1 % 10)) // 破十法
+                    )) continue; 
+
+                    if (res !== null && res >= 0) generatedSuccessfully = true;
+                }
+            } 
+
+            if (!generatedSuccessfully) {
+                // 实在生成不出符合条件的，给个默认简单题
+                console.warn("Generation failed. Falling back to simple addition.");
+                op1 = '+'; n1 = 5; n2 = 5; res = 10; n3 = null; op2 = null; mathProbDispEl.classList.remove('three-op');
+            }
+            
+            currentProblem = { num1: n1, num2: n2, operator1: op1, num3: n3, operator2: op2, answer: res };
+            n1El.textContent = n1; n2El.textContent = n2; op1El.textContent = op1; ansInput.value = '';
+            if (shouldFocus) ansInput.focus();
+            
+            if (isExamMode) { feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`; feedbackEl.className = ''; } 
+            else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) {
+                feedbackEl.textContent = ''; feedbackEl.className = '';
+            }
+        }
+
+        // --- 事件绑定 ---
+        submitBtn.addEventListener('click', checkAnswer); hintBtn.addEventListener('click', showCurrentHint);
+        newProbBtn.addEventListener('click', skipProblem); 
+        // 在切换模式时更新 currentMode
+        modeSelect.addEventListener('change', () => switchMode(modeSelect.value));
+        hintModalClose.addEventListener('click', closeHintModal);
+        examModalClose.addEventListener('click', closeExamModal);
+        window.addEventListener('click', (event) => { 
+            if (event.target === hintModal) closeHintModal(); 
+            if (event.target === examModal) closeExamModal();
+        });
+        ansInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
+        window.addEventListener('resize', setButtonMode); 
+        
+        // 阻止移动端双击缩放
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) e.preventDefault(); 
+            lastTouchEnd = now;
+        }, { passive: false });
+
+        // --- 启动逻辑 ---
+        setButtonMode(); 
+        // 确保启动时使用默认选中的 'jieShi'，并初始化 currentMode
+        switchMode(modeSelect.value || 'jieShi'); 
+    </script>
+</body>
+</html>
