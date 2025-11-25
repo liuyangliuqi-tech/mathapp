@@ -130,7 +130,7 @@
             100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
         }
         
-        /* --- 模态框通用样式 (保持不变) --- */
+        /* --- 模态框通用样式 --- */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
@@ -150,7 +150,7 @@
         .modal-title { font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--color-text-dark); margin-bottom: 2vh; border-bottom: 2px solid #ddd; padding-bottom: 1vh; }
         .modal-close { float: right; font-size: clamp(24px, 5vw, 32px); font-weight: 300; cursor: pointer; color: #888; transition: color 0.2s; }
         
-        /* --- 提示步骤样式 (保持不变) --- */
+        /* --- 提示步骤样式 --- */
         .modal-step {
             margin-bottom: 2vh; 
             font-size: clamp(15px, 2.5vw, 18px); 
@@ -191,7 +191,7 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* --- 成绩单样式 (已优化部分) --- */
+        /* --- 成绩单样式 --- */
         
         #examReportContent {
             padding-bottom: 20px; 
@@ -284,7 +284,7 @@
             display: flex;
             align-items: center;
             justify-content: flex-end; 
-            gap: 5px; 
+            gap: 5px;
         }
         
         .btn-hint-review {
@@ -347,13 +347,13 @@
             <div class="mode-switch-group">
                 <div class="select-wrapper">
                     <select id="modeSelect" class="mode-select">
-                        <optgroup label="基础练习模式">
+                        <optgroup label="基础运算模式 (含未知数)">
                             <option value="add">基础加法 (+)</option>
-                            <option value="sub">基础减法 (-)</option>
-                            <option value="mixed">混合练习 (±)</option>
+                            <option value="sub">基础减法 (含 A - ? = C)</option>
+                            <option value="mixed">混合练习 (含 ?)</option>
                             <option value="continuous">🔥 连续运算 (三步)</option>
                         </optgroup>
-                        <optgroup label="专项方法练习 (仅限加减)">
+                        <optgroup label="专项方法练习">
                             <option value="couShi">🎯 凑十法 (加法)</option>
                             <option value="jieShi" selected>🎯 借十法 (破十法) (减法)</option>
                             <option value="pingShi">🎯 平十法 (减法)</option>
@@ -374,7 +374,7 @@
             <div class="math-problem" id="mathProblemDisplay">
                 <span id="number1">?</span><span id="operator1" class="operator">?</span>
                 <span id="number2">?</span><span id="operator2"></span> 
-                <span id="number3"></span><span>=</span><span>?</span>
+                <span id="number3"></span><span id="equalsSign">=</span><span id="resultDisplay">?</span>
             </div>
             <div id="vfxContainer" class="vfx-container"></div>
             <button id="newProblemButton">🔄 <span class="button-text">换题</span></button>
@@ -407,7 +407,7 @@
 
     <script>
         // --- 变量和状态初始化 ---
-        let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [] }; 
+        let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [], unknownPosition: 'res' }; 
         let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 20;
         let isExamMode = false; const EXAM_TOTAL_QUESTIONS = 10;
         let examCurrentQuestion = 0, examCorrectAnswers = 0; 
@@ -417,8 +417,8 @@
         let currentMode = 'jieShi'; 
 
         // --- 元素 ID 查找 ---
-        const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal] = 
-            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal'].map(id => document.getElementById(id));
+        const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] = 
+            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => document.getElementById(id));
         const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps] =
             ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps'].map(id => document.getElementById(id));
         const examReportContent = document.getElementById('examReportContent'); 
@@ -468,81 +468,219 @@
             examModal.style.display = 'none';
         }
 
-        // --- 提示步骤逻辑 (保持不变) ---
+        // --- 提示步骤逻辑 (最终优化版) ---
+        // n1, n2, op: 用于计算或作为中间步骤的数字和运算符
+        // forcedMode: 强制使用某种提示模式 (用于未知数求解的计算步骤)
         function getSingleOpHintSteps(n1, n2, op, forcedMode = null) {
-            let s = '', t = '', res = op === '+' ? n1 + n2 : n1 - n2;
-            let formulaHTML = ''; 
-            const tSpan = numSpan(10, 'highlight-goal'); 
-            const big = op === '+' ? Math.max(n1, n2) : n1;
-            const small = op === '+' ? Math.min(n1, n2) : n2;
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
-            const u1 = n1 % 10;
+            let s = '', t = '';
             
+            // **1. 确定当前执行模式和基础信息**
             const effectiveMode = forcedMode || currentMode;
-
-            // 默认设置为基础运算
-            t = '基础加减法'; 
+            
+            // 结果计算 (总是计算 A op B 的结果)
+            const res = op === '+' ? n1 + n2 : n1 - n2; 
+            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+            const tSpan = numSpan(10, 'highlight-goal'); 
+            const u1 = n1 % 10; // n1 的个位
+            
+            // --- 默认的简单计算步骤 ---
+            t = '基础加减法 (直接计算)'; 
             s = `<div class="modal-step">${stepContent('直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
-            formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+            let formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+            let calculationDetails = { title: t, stepsHTML: s, formula: formulaHTML };
 
-            // --- 专项方法逻辑 ---
+            // **2. 求解未知数逻辑 (A op ? = C) **
+            // 只有在不是强制模式 (即是原始题目) 且未知数在 n2 位置时触发
+            if (currentProblem.unknownPosition === 'n2' && !forcedMode) {
+                
+                const n1Known = currentProblem.num1;
+                const n2Answer = currentProblem.answer; // 答案
+                // 计算已知结果 C: (n1 op n2Answer)
+                const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer); 
+                const knownResSpan = numRedSpan(knownResult);
+                
+                let subN1, subN2, conversionText;
 
-            // 1. 凑十法 (加法)
+                if (op === '-') {
+                    // 未知减数: A - ? = C. 求解: ? = A - C
+                    subN1 = n1Known; subN2 = knownResult; 
+                    t = '🧮 求解未知减数 (? = A - C)';
+                    conversionText = `：🔍 ${numRedSpan(n1Known)} 减去未知数 (?) 等于 ${knownResSpan}，所以未知数 (?) 等于 ${numRedSpan(n1Known)} 减去 ${knownResSpan}。`;
+                } else if (op === '+') {
+                    // 未知加数: A + ? = C. 求解: ? = C - A
+                    subN1 = knownResult; subN2 = n1Known; 
+                    t = '🧮 求解未知加数 (? = C - A)';
+                    conversionText = `：🔍 ${numRedSpan(n1Known)} 加上未知数 (?) 等于 ${knownResSpan}，所以未知数 (?) 等于 ${knownResSpan} 减去 ${numRedSpan(n1Known)}。`;
+                }
+
+                // --- 关系转换步骤 (必有) ---
+                s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
+
+                // --- 计算步骤：套用专项方法或基础计算 ---
+                
+                // 计算 D - E 减法所需的参数
+                const uSubN1 = subN1 % 10;
+                const uSubN2 = subN2 % 10;
+                const isBreakTen = subN1 > 10 && uSubN2 > uSubN1; // 破十的精确定义
+                const isTensSub = subN1 % 10 === 0 && subN2 > 0; // 被减数是整十数 (如 20 - 5)
+                
+                // 核心优化判断：判断转换后的减法 D - E 是否属于简单计算
+                const isSimpleSub = subN1 <= 10 || // 1. 10以内的减法
+                                    (subN1 > 10 && uSubN2 <= uSubN1) || // 2. 不破十 (D的个位 >= E的个位)，包含 18-5 和 18-11
+                                    (subN1 > 10 && subN2 % 10 === 0); // 3. 减数是整十数 (如 19-10)
+
+                let calculationTitle = '基础减法';
+
+                if (isSimpleSub) {
+                    // **情况 A: 简单计算 (不需要任何专项方法)**
+                    calculationDetails = { 
+                        stepsHTML: `<div class="modal-step">${stepContent('步骤 2: 直接计算', `：关系转换后是 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)}，直接计算得 ${numRedSpan(n2Answer)}。`)}</div>`,
+                        formula: `<span class="formula">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`,
+                        title: '基础减法',
+                    };
+                    
+                } else if (isBreakTen || isTensSub) {
+                    // **情况 B: 需要破十或整十数减法 (走专项方法)**
+                    
+                    let preferredSubMode = effectiveMode;
+                    if (isTensSub) {
+                        preferredSubMode = 'tensSub'; 
+                    } else if (preferredSubMode !== 'pingShi' && preferredSubMode !== 'jieShi') {
+                         preferredSubMode = 'jieShi'; // 默认走借十
+                    }
+                    
+                    // 递归调用自身，传入 D-E 运算，并强制使用 preferredSubMode
+                    // 注意：这里使用 getSingleOpHintSteps 的返回值来获取计算步骤
+                    calculationDetails = getSingleOpHintSteps(subN1, subN2, '-', preferredSubMode); 
+                    calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796]/g, '').trim();
+
+                    // 附加计算步骤 (移除递归调用返回的公式，因为它只展示 D-E=?)
+                    calculationDetails.stepsHTML = calculationDetails.stepsHTML.replace(/<span class="formula">.*?<\/span>/s, ''); 
+                } else {
+                    // 防守性代码块：默认基础计算
+                     calculationDetails = { 
+                        stepsHTML: `<div class="modal-step">${stepContent('步骤 2: 直接计算', `：用减法关系 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)} 来求解。`)}</div>`,
+                        formula: `<span class="formula">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`,
+                        title: '基础减法',
+                    };
+                }
+
+                s += calculationDetails.stepsHTML; 
+                t += ` (计算使用：${calculationTitle})`; // 更新主标题
+
+                // --- 最终公式 (分两行显示) ---
+                
+                // 第一行: 关系转换
+                const conversionFormula = `<span class="formula" style="font-size: clamp(16px, 3vw, 20px); margin-top: 0; margin-bottom: 0.5vh; color: var(--color-apple-orange);">${numRedSpan(n1Known)} ${opRedSpan(op)} ? ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ? ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)}</span>`;
+                
+                // 第二行: 提取具体的计算方法公式（例如借十法、平十法的详细步骤公式）
+                let calculationFormula = calculationDetails.formula; 
+                
+                if (calculationDetails.title.includes('基础减法')) {
+                    // 如果是基础减法，计算公式就是简单的 D - E = 答案
+                    calculationFormula = `<span class="formula">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`;
+                } else if (calculationDetails.formula.includes('=') && !calculationDetails.formula.includes('→')) {
+                    // 确保我们只展示实际的计算步骤，而不是关系转换
+                    // 并且将顶部的 margin 设为 0 以紧贴上一行
+                    calculationFormula = calculationFormula.replace(/<span class="formula">/g, '<span class="formula" style="margin-top: 0;">');
+                } else {
+                    // 无法提取，使用默认计算结果
+                    calculationFormula = `<span class="formula" style="margin-top: 0;">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`;
+                }
+
+                formulaHTML = conversionFormula + calculationFormula; // 合并为两行
+                
+                return { title: t, stepsHTML: s, formula: formulaHTML }; 
+            }
+            
+            // **3. 标准运算逻辑 (A op B = ?) **
+
             if (op === '+') {
-                const u2 = n2 % 10;
-                if (res > 10 && u1 + u2 > 10) { 
+                const isCouShi = res > 10 && (n1 % 10) + (n2 % 10) > 10;
+                
+                if (isCouShi && (effectiveMode === 'couShi' || forcedMode === 'couShi')) {
+                    // 凑十法 (加法) 
+                    const big = Math.max(n1, n2); const small = Math.min(n1, n2);
                     const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
                     const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
                     const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
                     const nextTen = big + need, nextTenSpan = numSpan(nextTen, 'highlight-goal');
                     t = '✨ 凑十法魔法拆分';
-                    s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${needSpan} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
+                    s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${need} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
                     s += `<div class="modal-step">${stepContent('步骤 2: 小数拆分', `：✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
                     s += `<div class="modal-step">${stepContent('步骤 3: 魔法合体', `：🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
-                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
                 }
-            } else { // 减法 (破十法)
-                const isBreakTen = n1 > 10 && n2 > u1;
+            } else if (op === '-') { 
+                // 减法专项判断
+                const u2 = n2 % 10;
+                const isBreakTen = n1 > 10 && u2 > u1;
+                const isTensSub = n1 % 10 === 0 && n2 > 0; // 被减数是整十数 (如 20 - 5)
+                const isSimpleTenSub = n1 > 10 && n1 < 30 && (n2 === 10 || n2 === 20) && n1 >= n2; // 十几减整十数
 
-                if (isBreakTen) {
+                if (isSimpleTenSub || !isBreakTen) {
+                    // 1. 十几减整十数（如 19-10），或不破十的减法 (包括两位数减两位数，如 18-11)，走基础计算
+                    t = '基础减法 (同位相减)';
+                    s = `<div class="modal-step">${stepContent('直接计算 (同位相减)', `：个位 ${numSpan(u1, 'highlight-remain')} 减去 ${numSpan(u2, 'highlight-remain')}，十位 ${numSpan(Math.floor(n1/10), 'highlight-remain')} 减去 ${numSpan(Math.floor(n2/10), 'highlight-remain')}。`)}</div>`;
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
                     
-                    if (effectiveMode === 'pingShi' || forcedMode === 'pingShi') { 
-                         const rem = n2 - u1; 
-                         const tenRem = n1 - u1; 
-                         t = '📏 平十法 (连减法)';
-                         const [u1Span, remSpan, n2Span, tenRemSpan] = [numSpan(u1, 'highlight-ten'), numSpan(rem, 'highlight-remain'), numSpan(n2, 'highlight-ten'), numSpan(tenRem, 'highlight-goal')];
-                         s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
-                         s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
-                         s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
-                         formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                } else if (isTensSub || (isBreakTen && effectiveMode === 'tensSub') || (isBreakTen && forcedMode === 'tensSub')) {
+                    // 2. 整十数减法 (如 20 - 15)，走连减法思路
+                    t = '🔢 整十数减法 (连减法思路)';
                     
-                    } else { // 借十法 (默认模式或被强制指定)
-                        const tMinusN2 = 10 - n2;
-                        t = '⚡ 借十法 (破十法)';
-                        const [u1Span, tMinusN2Span, n2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal'), numSpan(n2, 'highlight-ten')];
-                        s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
-                        s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
-                        s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
-                        formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
+                    const n2Ten = Math.floor(n2 / 10) * 10; 
+                    const n2Unit = n2 % 10; 
+                    const iR = n1 - n2Ten;
+                    const [n2TenSpan, n2UnitSpan, iRSpan] = [numSpan(n2Ten, 'highlight-ten'), numSpan(n2Unit, 'highlight-remain'), numSpan(iR, 'highlight-goal')];
                     
-                    }
+                    s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${n2TenSpan} (整十数) 和 ${n2UnitSpan} (个位)。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 2: 先减整十', `：💪 ${n1Red} 先减去 ${n2TenSpan}，得到 ${iRSpan}。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 3: 再减个位', `：🏃 用 ${iRSpan} 再减去剩下的 ${n2UnitSpan}，得到结果 ${resRed}。`)}</div>`;
+                    
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${n2TenSpan} ${parenRedSpan(')')} ${opRedSpan('-')} ${n2UnitSpan} ${opRedSpan('=')} ${iRSpan} ${opRedSpan('-')} ${n2UnitSpan} ${opRedSpan('=')} ${resRed}</span>`;
+
+                } else if (isBreakTen && (effectiveMode === 'pingShi' || forcedMode === 'pingShi')) { 
+                    // 3. 平十法 (连减法) - 适用于所有破十
+                        const rem = n2 - u1; 
+                        const tenRem = n1 - u1; 
+                        t = '📏 平十法 (连减法)';
+                        const [remSpan, tenRemSpan] = [numSpan(rem, 'highlight-remain'), numSpan(tenRem, 'highlight-goal')];
+                        const u1Span = numSpan(u1, 'highlight-ten');
+                        s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
+                        s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
+                        s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
+                        formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                
+                } else if (isBreakTen && (effectiveMode === 'jieShi' || forcedMode === 'jieShi')) { 
+                    // 4. 借十法 (仅用于十几减一位数破十)
+                    const tMinusN2 = 10 - n2;
+                    t = '⚡ 借十法 (破十法)';
+                    const [u1Span, tMinusN2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal')];
+                    s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
+                    s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
+                    formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
                 }
             }
+
             return { title: t, stepsHTML: s, formula: formulaHTML }; 
         }
 
         // --- 模态框和报告逻辑 (保持不变) ---
         function generateHintSteps(problem, problemIndex = null) {
-            const { num1, num2, operator1, num3, operator2, answer } = problem;
+            const { num1, num2, operator1, num3, operator2, answer, unknownPosition } = problem;
             let s = '', finalFormula = '';
             hintModal.style.display = 'block';
             
             if (num3 !== null && num3 !== undefined) {
-                // 连续运算 (三步题) 逻辑
+                // 连续运算 (三步题) 逻辑 - 假设三步题中未知数始终在结果位置
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
                 
                 // 1. 获取第一步的智能提示
+                const originalProblem = currentProblem;
+                currentProblem = { ...problem, num1: num1, num2: num2, operator1: operator1, answer: iR, unknownPosition: 'res' };
                 const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, currentMode); 
+                currentProblem = originalProblem; 
 
                 hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
                 
@@ -551,14 +689,16 @@
                 s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
                 
                 // 2. 获取第二步的智能提示
+                currentProblem = { ...problem, num1: iR, num2: num3, operator1: operator2, answer: answer, unknownPosition: 'res' };
                 const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, currentMode); 
+                currentProblem = originalProblem; 
 
                 s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
                 s += secondStepDetails.stepsHTML; 
                 finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
                 
             } else {
-                // 单步运算
+                // 单步运算 (包含未知数在不同位置的情况)
                 const details = getSingleOpHintSteps(num1, num2, operator1);
                 hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
                 s = details.stepsHTML;
@@ -581,10 +721,11 @@
         };
         const showProblemHint = (index) => {
             const problemData = examProblems[index];
+            currentProblem = problemData; 
             if (problemData) generateHintSteps(problemData, index);
         };
         
-        // **图片生成函数 (保持不变)**
+        // **图片生成函数**
         function generateReportImage() {
             const reportEl = document.getElementById('examReportContent');
             if (typeof html2canvas === 'undefined' || !html2canvas) { alert('图片生成库加载失败。'); return; }
@@ -603,7 +744,6 @@
                 
                 const imgURL = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
-                a.href = imgURL;
                 const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
                 const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ''); 
                 a.download = `数学测试成绩_${score.toFixed(0)}分_${today}.png`;
@@ -615,7 +755,7 @@
             });
         }
 
-        // **报告生成逻辑 (已修改班级)**
+        // **报告生成逻辑**
         function endExam() {
             submitBtn.disabled = true; 
             isSubmitting = false; 
@@ -627,7 +767,18 @@
             
             let problemListHTML = examProblems.map((p, index) => {
                 const correctAnswerDisplay = (p.answer === undefined || p.answer === null || isNaN(p.answer)) ? '??' : p.answer;
-                const problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
+                
+                // 报告中的题目显示要根据未知数位置来定
+                let problemText = '';
+                if (p.unknownPosition === 'res') {
+                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
+                } else if (p.unknownPosition === 'n2') {
+                    // 格式: A op ? = C
+                    const knownResult = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer); // 已知的差/和 C
+                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${knownResult}`;
+                }
+
+
                 const isCorrect = p.userAnswer === p.answer; 
                 const [mark, markClass] = isCorrect ? ['✔️', ''] : ['❌', 'mark-wrong'];
                 const userAnswerDisplay = p.userAnswer === undefined || p.userAnswer === null || isNaN(p.userAnswer) ? '?' : p.userAnswer;
@@ -635,7 +786,7 @@
                 
                 return `
                     <li class="problem-item">
-                        <span class="problem-text">${problemText} ${opRedSpan('=')}</span>
+                        <span class="problem-text">${problemText}</span>
                         
                         <span class="user-answer-display" style="color: ${userAnswerColor};">
                             ${userAnswerDisplay}
@@ -684,7 +835,7 @@
             feedbackEl.textContent = `考试结束，得分 ${score.toFixed(0)} 分`; feedbackEl.className = 'feedback-correct';
         }
 
-        // --- 答案检查和问题生成 (保持不变) ---
+        // --- 答案检查和问题生成 ---
         const checkAnswer = () => {
             if (isSubmitting || (isExamMode && examCurrentQuestion >= EXAM_TOTAL_QUESTIONS)) { return; }
 
@@ -745,19 +896,62 @@
         
         function generateProblem(shouldFocus = false) { 
             let n1, n2, op1, n3 = null, op2 = null, res = null;
+            let unknownPos = 'res'; // 默认未知数在结果位置 (A op B = ?)
             let generatorMode = isExamMode ? ['add', 'sub', 'mixed', 'continuous', 'couShi', 'jieShi', 'pingShi'][Math.floor(Math.random() * 7)] : modeSelect.value;
             let attempts = 0; 
             let generatedSuccessfully = false; 
 
             if (isExamMode) submitBtn.disabled = false;
             
-            mathProbDispEl.classList.remove('three-op'); op2El.textContent = ''; n3El.textContent = '';
+            mathProbDispEl.classList.remove('three-op'); 
             
             while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
                 attempts++;
                 n3 = null; op2 = null; res = null;
+                unknownPos = 'res';
                 
-                if (generatorMode === 'continuous') {
+                if (generatorMode === 'sub') {
+                    op1 = '-';
+                    // 40% 概率生成未知减数: A - ? = C
+                    if (Math.random() < 0.4) {
+                         n1 = 10 + Math.floor(Math.random() * 11); 
+                         res = 1 + Math.floor(Math.random() * (n1 - 1)); // res 是已知结果 C
+                         n2 = n1 - res; // n2 是答案
+                         if (n2 > 0 && n2 <= 19) { unknownPos = 'n2'; generatedSuccessfully = true; }
+                    } else {
+                         // 60% 概率生成标准减法: A - B = ?
+                         n1 = 10 + Math.floor(Math.random() * 11); 
+                         n2 = Math.floor(Math.random() * n1); 
+                         res = n1 - n2; 
+                         if (res >= 0) generatedSuccessfully = true;
+                    }
+
+                } else if (generatorMode === 'mixed') {
+                    // 混合模式: 随机选择 A+B=?, A-B=?, A+?=C, A-?=C
+                    const type = Math.floor(Math.random() * 4);
+
+                    if (type === 0) { // A + B = ?
+                        op1 = '+'; n1 = Math.floor(Math.random() * 11); n2 = Math.floor(Math.random() * (maxNum + 1 - n1)); res = n1 + n2;
+                        unknownPos = 'res'; generatedSuccessfully = true;
+                    } else if (type === 1) { // A - B = ?
+                        op1 = '-'; n1 = 10 + Math.floor(Math.random() * 11); n2 = Math.floor(Math.random() * n1); res = n1 - n2;
+                        unknownPos = 'res'; generatedSuccessfully = true;
+                    } else if (type === 2) { // A + ? = C (未知加数)
+                        op1 = '+'; 
+                        n1 = 5 + Math.floor(Math.random() * 10); 
+                        let maxN2 = maxNum - n1;
+                        if (maxN2 < 1) continue; 
+                        n2 = 1 + Math.floor(Math.random() * maxN2); // n2 是答案
+                        res = n1 + n2; // res 是已知结果 C
+                        if (n2 > 0 && res <= maxNum) { unknownPos = 'n2'; generatedSuccessfully = true; }
+                    } else if (type === 3) { // A - ? = C (未知减数)
+                         op1 = '-'; 
+                         n1 = 10 + Math.floor(Math.random() * 11); res = 1 + Math.floor(Math.random() * (n1 - 1));
+                         n2 = n1 - res; // n2 是答案
+                         if (n2 > 0 && n2 <= 19) { unknownPos = 'n2'; generatedSuccessfully = true; }
+                    }
+
+                } else if (generatorMode === 'continuous') {
                     op1 = Math.random() < 0.5 ? '+' : '-'; n1 = 10 + Math.floor(Math.random() * 10);
                     let n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
                     n2 = 1 + Math.floor(Math.random() * n2Range);
@@ -770,9 +964,10 @@
                         n3 = 1 + Math.floor(Math.random() * iR); res = iR - n3; 
                     }
                     if (res !== null && res <= maxNum && res >= 0) { 
-                        mathProbDispEl.classList.add('three-op'); op2El.textContent = op2; n3El.textContent = n3;
+                        mathProbDispEl.classList.add('three-op'); 
                         generatedSuccessfully = true;
                     }
+
                 } else if (generatorMode === 'couShi') {
                     op1 = '+'; 
                     n1 = 7 + Math.floor(Math.random() * 10); 
@@ -781,40 +976,104 @@
                     if (n1 + n2 > maxNum) continue; 
                     res = n1 + n2;
                     if (res > 10 && (n1 % 10) + (n2 % 10) > 10 && res <= maxNum) generatedSuccessfully = true;
+
                 } else if (generatorMode === 'pingShi' || generatorMode === 'jieShi') {
                     op1 = '-'; 
-                    n1 = 11 + Math.floor(Math.random() * 8); 
+                    n1 = 11 + Math.floor(Math.random() * 9); // 11-20
                     let uD = n1 % 10; 
-                    n2 = uD + 1 + Math.floor(Math.random() * (9 - uD)); 
-                    if (n2 >= n1) n2 = n1 - 1; 
-                    res = n1 - n2;
-                    if (n1 > 10 && n2 > uD && res > 0) generatedSuccessfully = true;
-                } else { 
-                    op1 = generatorMode === 'mixed' ? (Math.random() < 0.5 ? '+' : '-') : (generatorMode === 'add' ? '+' : '-');
-                    if (op1 === '+') { 
-                        n1 = Math.floor(Math.random() * (maxNum + 1)); 
-                        n2 = Math.floor(Math.random() * (maxNum + 1 - n1)); 
-                    } else { 
-                        n1 = 10 + Math.floor(Math.random() * 11); 
-                        n2 = Math.floor(Math.random() * (n1 + 1)); 
-                    }
-                    res = op1 === '+' ? n1 + n2 : n1 - n2;
-                    if ((generatorMode !== 'mixed') && (
-                        (op1 === '+' && res > 10 && (n1 % 10) + (n2 % 10) > 10) || 
-                        (op1 === '-' && n1 > 10 && n2 > (n1 % 10)) 
-                    )) continue; 
+                    
+                    if (Math.random() < 0.5) { 
+                        // A - B = ? 模式 (50%)
+                        // 确保是破十：B > A的个位 (uD)
+                        n2 = uD + 1 + Math.floor(Math.random() * (9 - uD)); 
+                        if (n2 >= n1) n2 = n1 - 1; 
+                        res = n1 - n2;
+                        unknownPos = 'res';
+                        // 校验：必须是破十题
+                        const isBreakTenCheck = n1 > 10 && n2 % 10 > uD;
+                        if (isBreakTenCheck && res >= 0) generatedSuccessfully = true;
+                    } else {
+                        // A - ? = C 模式 (50%)
+                        // A - ? = C  <==>  ? = A - C
+                        
+                        let minC = uD + 1;
+                        let maxC = n1 - 1; 
+                        
+                        if (maxC < minC) continue; 
+                        
+                        // C (res) 必须大于 uD，才能确保 A - C 是破十减法
+                        res = minC + Math.floor(Math.random() * (maxC - minC + 1)); 
+                        
+                        n2 = n1 - res; // n2 是答案
+                        unknownPos = 'n2';
 
-                    if (res !== null && res >= 0) generatedSuccessfully = true;
-                }
+                        // 最终校验：A 必须是十几，n2 是答案且 > 0，且 A-res 确实需要破十 (res 的个位 > uD)
+                        if (n1 > 10 && n2 > 0 && res % 10 > uD) generatedSuccessfully = true;
+                    }
+                
+                } else if (generatorMode === 'add') { 
+                    op1 = '+'; 
+                    n1 = Math.floor(Math.random() * (maxNum + 1)); 
+                    n2 = Math.floor(Math.random() * (maxNum + 1 - n1)); 
+                    res = n1 + n2;
+                    if (res >= 0) generatedSuccessfully = true;
+
+                } 
             } 
 
             if (!generatedSuccessfully) {
-                console.warn("Generation failed. Falling back to simple addition.");
-                op1 = '+'; n1 = 5; n2 = 5; res = 10; n3 = null; op2 = null; mathProbDispEl.classList.remove('three-op');
+                // 如果尝试多次失败，生成一个简单的默认破十题
+                op1 = '-'; n1 = 15; n2 = 7; res = 8; n3 = null; op2 = null; unknownPos = 'res';
             }
             
-            currentProblem = { num1: n1, num2: n2, operator1: op1, num3: n3, operator2: op2, answer: res };
-            n1El.textContent = n1; n2El.textContent = n2; op1El.textContent = op1; ansInput.value = '';
+            // --- 更新 currentProblem 对象 ---
+            currentProblem = { 
+                num1: n1, 
+                num2: n2, // n2 是运算中的第二个数字，如果 unknownPos='n2'，则 n2 是答案
+                operator1: op1, 
+                num3: n3, 
+                operator2: op2, 
+                answer: (unknownPos === 'res' || generatorMode === 'continuous') ? res : n2, 
+                unknownPosition: unknownPos 
+            };
+            
+            // --- 更新显示元素 ---
+            
+            // 重置所有元素
+            n1El.textContent = ''; op1El.textContent = ''; n2El.textContent = ''; 
+            op2El.textContent = ''; n3El.textContent = ''; equalsSignEl.textContent = '=';
+            resultDisplayEl.textContent = ''; 
+
+            if (unknownPos === 'n2') {
+                // 格式: A op ? = C (答案是 n2)
+                n1El.textContent = n1; 
+                op1El.textContent = op1; 
+                n2El.textContent = '?'; 
+                
+                // 等号和已知结果 (C)
+                equalsSignEl.textContent = '=';
+                // 计算已知结果 C: n1 op n2(answer)
+                const knownResult = n1 + (op1 === '+' ? n2 : -n2);
+                resultDisplayEl.textContent = knownResult;
+            } else {
+                // 格式: A op B = ? 或 A op B op C = ? (答案是 res)
+                n1El.textContent = n1; 
+                op1El.textContent = op1; 
+                n2El.textContent = n2; 
+                
+                if (generatorMode === 'continuous') {
+                    op2El.textContent = op2; 
+                    n3El.textContent = n3;
+                } else {
+                    op2El.textContent = ''; 
+                    n3El.textContent = '';
+                }
+                
+                // 等号和问号 (?)
+                equalsSignEl.textContent = '=';
+                resultDisplayEl.textContent = '?';
+            }
+
             if (shouldFocus) ansInput.focus();
             
             if (isExamMode) { feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`; feedbackEl.className = ''; } 
