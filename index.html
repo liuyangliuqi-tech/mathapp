@@ -130,7 +130,7 @@
             100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
         }
         
-        /* --- 模态框通用样式 (已修复) --- */
+        /* --- 模态框通用样式 (保持不变) --- */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
@@ -150,7 +150,7 @@
         .modal-title { font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--color-text-dark); margin-bottom: 2vh; border-bottom: 2px solid #ddd; padding-bottom: 1vh; }
         .modal-close { float: right; font-size: clamp(24px, 5vw, 32px); font-weight: 300; cursor: pointer; color: #888; transition: color 0.2s; }
         
-        /* --- 提示步骤样式 (已修复) --- */
+        /* --- 提示步骤样式 (保持不变) --- */
         .modal-step {
             margin-bottom: 2vh; 
             font-size: clamp(15px, 2.5vw, 18px); 
@@ -191,7 +191,7 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* --- 成绩单样式 --- */
+        /* --- 成绩单样式 (已优化部分) --- */
         
         #examReportContent {
             padding-bottom: 20px; 
@@ -205,16 +205,42 @@
             padding: 20px;
         }
 
-        .report-header { text-align: center; margin-bottom: 20px; }
+        .report-header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            max-width: 90%; 
+            margin-left: auto;
+            margin-right: auto;
+        }
         .report-header h3 { 
-            font-size: 28px; font-weight: 800; color: var(--color-text-dark); 
-            margin: 0; border-bottom: 3px double #333; padding-bottom: 5px;
+            font-size: 26px; 
+            font-weight: 800; 
+            color: var(--color-text-dark); 
+            margin: 0; 
+            border-bottom: 3px double #333; 
+            padding-bottom: 5px;
+            white-space: nowrap; 
         }
         .info-row { 
-            display: flex; justify-content: space-between; font-size: 16px; 
-            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px dashed #ddd; 
+            display: flex; 
+            justify-content: space-around; 
+            font-size: 16px; 
+            margin-bottom: 15px; 
+            padding-bottom: 5px; 
+            border-bottom: 1px dashed #ddd; 
+            width: 100%; 
         }
-        .info-item span { font-weight: 700; color: var(--color-apple-blue); }
+        .info-item {
+            flex: 1; 
+            text-align: center; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+        .info-item span { 
+            font-weight: 700; 
+            color: var(--color-apple-blue); 
+        }
 
         .score-box {
             position: absolute; top: 10px; right: 20px; 
@@ -442,7 +468,7 @@
             examModal.style.display = 'none';
         }
 
-        // --- 提示步骤逻辑 (加入了智能判断的逻辑) ---
+        // --- 提示步骤逻辑 (保持不变) ---
         function getSingleOpHintSteps(n1, n2, op, forcedMode = null) {
             let s = '', t = '', res = op === '+' ? n1 + n2 : n1 - n2;
             let formulaHTML = ''; 
@@ -452,7 +478,6 @@
             const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
             const u1 = n1 % 10;
             
-            // 决定使用的模式：优先使用强制模式，其次使用当前模式
             const effectiveMode = forcedMode || currentMode;
 
             // 默认设置为基础运算
@@ -466,7 +491,6 @@
             if (op === '+') {
                 const u2 = n2 % 10;
                 if (res > 10 && u1 + u2 > 10) { 
-                    // 满足凑十法条件，即使当前模式不是凑十，也认为这是最合适的
                     const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
                     const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
                     const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
@@ -481,9 +505,8 @@
                 const isBreakTen = n1 > 10 && n2 > u1;
 
                 if (isBreakTen) {
-                    // 满足破十法条件，此时根据 effectiveMode 决定使用平十法或借十法
                     
-                    if (effectiveMode === 'pingShi' || forcedMode) { // 优先使用平十法 (或被强制指定)
+                    if (effectiveMode === 'pingShi' || forcedMode === 'pingShi') { 
                          const rem = n2 - u1; 
                          const tenRem = n1 - u1; 
                          t = '📏 平十法 (连减法)';
@@ -493,7 +516,7 @@
                          s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
                          formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
                     
-                    } else { // 使用借十法 (默认模式或被强制指定)
+                    } else { // 借十法 (默认模式或被强制指定)
                         const tMinusN2 = 10 - n2;
                         t = '⚡ 借十法 (破十法)';
                         const [u1Span, tMinusN2Span, n2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal'), numSpan(n2, 'highlight-ten')];
@@ -508,31 +531,30 @@
             return { title: t, stepsHTML: s, formula: formulaHTML }; 
         }
 
-        // --- 模态框和报告逻辑 (重点修改 generateHintSteps) ---
+        // --- 模态框和报告逻辑 (保持不变) ---
         function generateHintSteps(problem, problemIndex = null) {
             const { num1, num2, operator1, num3, operator2, answer } = problem;
             let s = '', finalFormula = '';
             hintModal.style.display = 'block';
             
             if (num3 !== null && num3 !== undefined) {
-                // --- 连续运算 (三步题) 逻辑修改 ---
+                // 连续运算 (三步题) 逻辑
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
                 
-                // 1. 获取第一步的智能提示 (根据当前模式或最合适方法)
-                const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, currentMode); // 传入 currentMode
+                // 1. 获取第一步的智能提示
+                const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, currentMode); 
 
                 hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
                 
-                // 添加第一步的标题和步骤
                 s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`; 
-                s += firstStepDetails.stepsHTML; // 使用智能生成的步骤
+                s += firstStepDetails.stepsHTML; 
                 s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
                 
                 // 2. 获取第二步的智能提示
-                const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, currentMode); // 传入 currentMode
+                const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, currentMode); 
 
                 s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
-                s += secondStepDetails.stepsHTML; // 使用智能生成的步骤
+                s += secondStepDetails.stepsHTML; 
                 finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
                 
             } else {
@@ -593,7 +615,7 @@
             });
         }
 
-        // **报告生成逻辑 (保持不变)**
+        // **报告生成逻辑 (已修改班级和日期)**
         function endExam() {
             submitBtn.disabled = true; 
             isSubmitting = false; 
@@ -636,8 +658,7 @@
                     <div class="report-header"><h3>小学一年级数学测试</h3></div>
                     <div class="info-row">
                         <div class="info-item">姓名：<span>刘书语</span></div>
-                        <div class="info-item">班级：<span>魔法一班</span></div>
-                        <div class="info-item">日期：<span>${today}</span></div>
+                        <div class="info-item">班级：<span>清华小学一(1)班</span></div>
                     </div>
                     
                     <h4 style="border-left: 5px solid var(--color-apple-blue); padding-left: 10px; margin-top: 20px;">一、计算题 (${EXAM_TOTAL_QUESTIONS} 题)</h4>
