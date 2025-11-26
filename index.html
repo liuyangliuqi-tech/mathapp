@@ -170,7 +170,7 @@
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             border: 1px solid #eee;
-            transition: all 0.3s;
+            transition: all 0.5s ease-out; /* 动画过渡 */
         }
         
         /* 手机端适配：缩小图标 */
@@ -181,13 +181,39 @@
 
         /* 减法被减掉的样式 */
         .is-subtracted {
-            opacity: 0.25;
+            opacity: 0.25 !important;
             filter: grayscale(100%);
             transform: scale(0.8);
+            background-color: #f5f5f5 !important;
+            border: 1px solid #ccc !important;
             text-decoration: line-through;
-            background-color: #f5f5f5;
         }
         
+        /* 凑十法/借十法的动态样式 */
+        .group-inactive {
+            opacity: 0.4;
+            transform: scale(0.9);
+        }
+        .highlight-red { /* 借十法中被借走的十个 */
+            background-color: rgba(255, 59, 48, 0.2);
+            box-shadow: 0 0 8px var(--color-apple-red);
+        }
+        .highlight-orange { /* 凑十法中要凑给 10 的部分 */
+            background-color: rgba(255, 149, 0, 0.2);
+            box-shadow: 0 0 8px var(--color-apple-orange);
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+        .group-ten { /* 湊成 10 的那一組 */
+             background-color: rgba(52, 199, 89, 0.3); /* Green tint */
+        }
+        .final-result {
+            opacity: 1;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px var(--color-apple-blue);
+        }
+
+
         .visual-legend {
             grid-column: 1 / -1; /* 占满整行 */
             font-size: 14px; color: #555; text-align: center; margin-top: 10px; font-weight: 600;
@@ -202,12 +228,22 @@
             font-size: clamp(15px, 2.5vw, 18px); 
             line-height: 1.6;
             padding-left: 10px; 
-            border-left: 4px solid var(--color-apple-blue); 
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
+            border-left: 4px solid #ddd; /* 默认灰色 */
+            transition: border-left 0.3s ease, background-color 0.3s ease; 
         }
+        /* 当前正在播放的步骤高亮 */
+        .modal-step.active-step {
+            border-left: 4px solid var(--color-apple-blue); 
+            background-color: var(--color-card-bg);
+            padding: 10px; /* 增加内边距让高亮更明显 */
+            margin-left: -10px; /* 调整回来 */
+            width: calc(100% + 10px);
+        }
+
         .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; } 
-        .modal-step.fade-start { opacity: 0; transform: translateY(10px); }
-        .modal-step.fade-end { opacity: 1; transform: translateY(0); }
+        
+        /* 移除旧的淡入动画 */
+        .modal-step.fade-start, .modal-step.fade-end { opacity: 1; transform: none; }
         
         /* 强调色定义 */
         .highlight-ten { color: var(--color-apple-orange); font-weight: 700; } 
@@ -229,7 +265,7 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* --- 成绩单样式 --- */
+        /* --- 成绩单样式 (省略，与上版一致) --- */
         #examReportContent {
             padding-bottom: 20px; position: relative; 
             background-color: #fff; border-radius: 15px; border: 2px solid #ccc;
@@ -406,55 +442,102 @@
         const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
         const stepContent = (title, content) => `<strong>${title}</strong>${content}`; 
 
-        // --- 可视化画图函数 ---
-        function renderVisualHelpers(container, n1, n2, op) {
+        // --- 可视化画图函数 (重写，支持类名注入) ---
+        function renderVisualHelpers(container, n1, n2, op, specificMode) {
             container.innerHTML = ''; // 清空旧图
-            if (n1 > 30) {
-                 // 如果数字太大，不画图，但可以加一个提示
+            if (n1 > 30 || ['continuous', 'mixed', 'add', 'sub'].includes(specificMode)) {
+                 // 连续运算或基础运算，只做静态显示
                  const msg = document.createElement('div');
                  msg.className = 'visual-legend';
-                 msg.textContent = `(数字较大，此处不绘制详细苹果图)`;
+                 msg.textContent = `(当前是 ${specificMode === 'sub' && n1 > 10 ? '减法破十' : specificMode === 'add' && n1 + n2 > 10 ? '加法进位' : '基础'}，下面步骤会详细分解)`;
                  container.appendChild(msg);
+
+                 const wrapper = document.createElement('div');
+                 wrapper.className = 'visual-container';
+                 
+                 const addItem = (type, isSubtracted = false) => {
+                     const item = document.createElement('div');
+                     item.className = 'visual-item';
+                     item.textContent = type === 'A' ? '🍎' : '🍏';
+                     if (isSubtracted) item.classList.add('is-subtracted');
+                     return item;
+                 };
+
+                 if (op === '+') {
+                     const total = n1 + n2;
+                     for (let i = 0; i < total; i++) {
+                         wrapper.appendChild(addItem(i < n1 ? 'A' : 'B'));
+                     }
+                 } else { // 减法
+                     for (let i = 0; i < n1; i++) {
+                         const isSubtracted = i >= (n1 - n2); 
+                         wrapper.appendChild(addItem('A', isSubtracted));
+                     }
+                 }
+                 container.appendChild(wrapper);
+
                  return; 
             }
 
+            // --- 动态模式 (凑十法/借十法) ---
             const wrapper = document.createElement('div');
             wrapper.className = 'visual-container';
-            
-            // 自动添加格子
-            const addItem = (type, isSubtracted = false) => {
-                const item = document.createElement('div');
-                item.className = 'visual-item';
-                item.textContent = type === 'A' ? '🍎' : '🍏';
-                if (isSubtracted) item.classList.add('is-subtracted');
-                return item;
-            };
+            const total = op === '+' ? n1 + n2 : n1;
+            const apples = [];
 
-            if (op === '+') {
-                // 加法：画 n1 个红苹果，n2 个绿苹果
-                const total = n1 + n2;
-                for (let i = 0; i < total; i++) {
-                    // 前 n1 个是红苹果，后面是绿苹果
-                    wrapper.appendChild(addItem(i < n1 ? 'A' : 'B'));
-                }
-                 // 添加图例说明
-                 const legend = document.createElement('div');
-                legend.className = 'visual-legend';
-                legend.textContent = `🍎 ${n1} 个 + 🍏 ${n2} 个 = ${total} 个`;
-                wrapper.appendChild(legend);
+            if (specificMode === 'couShi' && op === '+') {
+                // 凑十法 (例如 9 + 5)
+                const big = Math.max(n1, n2); const small = Math.min(n1, n2);
+                const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
 
-            } else { // 减法
-                // 减法：画 n1 个红苹果，把最后 n2 个变灰
-                for (let i = 0; i < n1; i++) {
-                    // 判断是否是被减去的部分 (最后 n2 个)
-                    const isSubtracted = i >= (n1 - n2); 
-                    wrapper.appendChild(addItem('A', isSubtracted));
+                // 1. 画大数 (红苹果)
+                for (let i = 0; i < big; i++) {
+                    const item = document.createElement('div');
+                    item.className = `visual-item cs-big-num cs-big-apple-${i + 1}`;
+                    item.textContent = '🍎';
+                    apples.push(item);
                 }
-                // 添加图例说明
-                const legend = document.createElement('div');
-                legend.className = 'visual-legend';
-                legend.textContent = `共有 ${n1} 个 🍎，拿走 ${n2} 个，还剩 ${n1-n2} 个`;
-                wrapper.appendChild(legend);
+                
+                // 2. 画小数 (绿苹果)
+                for (let i = 0; i < small; i++) {
+                    const item = document.createElement('div');
+                    item.className = `visual-item cs-small-num cs-small-apple-${i + 1}`;
+                    item.textContent = '🍏';
+                    apples.push(item);
+                }
+                
+                // 3. 添加到容器 (这里需要按照 10 格阵重新排列，但由于 Grid 自动排列，我们只关注类名)
+                apples.forEach(a => wrapper.appendChild(a));
+
+            } else if ((specificMode === 'jieShi' || specificMode === 'pingShi') && op === '-') {
+                // 借十法/平十法 (例如 15 - 8)
+                const u1 = n1 % 10; 
+                
+                // 1. 画第一个十位 (红苹果，共 10 个)
+                for (let i = 0; i < 10; i++) {
+                    const item = document.createElement('div');
+                    item.className = `visual-item js-ten-group js-apple-${i + 1}`;
+                    item.textContent = '🍎';
+                    apples.push(item);
+                }
+                
+                // 2. 画个位部分 (红苹果，共 u1 个)
+                for (let i = 0; i < u1; i++) {
+                    const item = document.createElement('div');
+                    item.className = `visual-item js-unit-group js-apple-${10 + i + 1}`;
+                    item.textContent = '🍎';
+                    apples.push(item);
+                }
+                
+                apples.forEach(a => wrapper.appendChild(a));
+                
+            } else {
+                 // 对于其他方法，或者未知数转换成减法的，使用静态渲染
+                 // 重新调用静态渲染逻辑，但传入当前 specificMode 以避免无限递归
+                 const isSubUnknown = currentProblem.unknownPosition === 'n2';
+                 const staticMode = isSubUnknown ? 'sub' : specificMode; 
+                 renderVisualHelpers(container, n1, n2, op, staticMode); 
+                 return;
             }
 
             container.appendChild(wrapper);
@@ -492,9 +575,9 @@
             const u1 = n1 % 10; 
             
             t = '基础加减法 (直接计算)'; 
-            s = `<div class="modal-step">${stepContent('直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
+            s = `<div class="modal-step step-1">${stepContent('直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
             let formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
-            let calculationDetails = { title: t, stepsHTML: s, formula: formulaHTML };
+            let calculationDetails = { title: t, stepsHTML: s, formula: formulaHTML, animationSteps: [] };
 
             // **2. 求解未知数逻辑 (A op ? = C) **
             if (currentProblem.unknownPosition === 'n2' && !forcedMode) {
@@ -515,7 +598,22 @@
                     conversionText = `：🔍 ${numRedSpan(n1Known)} 加上未知数 (?) 等于 ${knownResSpan}，所以未知数 (?) 等于 ${knownResSpan} 减去 ${numRedSpan(n1Known)}。`;
                 }
 
-                s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
+                s = `<div class="modal-step step-1">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
+                
+                // 动画步骤：静态减法，只有一步划掉
+                let totalDraw = subN1;
+                let numToSubtract = subN2;
+                let staticAnimSteps = [
+                    { delay: 50, stepClass: 'step-1', action: () => { 
+                         // 划掉最后 numToSubtract 个苹果
+                         const items = hintVisuals.querySelectorAll('.visual-item');
+                         for(let i = 0; i < numToSubtract; i++) {
+                             if(items[items.length - 1 - i]) {
+                                 items[items.length - 1 - i].classList.add('is-subtracted');
+                             }
+                         }
+                    }},
+                ];
 
                 // --- 计算步骤 (使用转换后的 subN1 - subN2) ---
                 const uSubN1 = subN1 % 10;
@@ -530,9 +628,10 @@
 
                 if (isSimpleSub) {
                      calculationDetails = { 
-                        stepsHTML: `<div class="modal-step">${stepContent('步骤 2: 直接计算', `：关系转换后是 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)}，直接计算得 ${numRedSpan(n2Answer)}。`)}</div>`,
+                        stepsHTML: `<div class="modal-step step-2">${stepContent('步骤 2: 直接计算', `：关系转换后是 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)}，直接计算得 ${numRedSpan(n2Answer)}。`)}</div>`,
                         formula: `<span class="formula">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`,
                         title: '基础减法',
+                        animationSteps: staticAnimSteps
                     };
                 } else if (isTensSub) preferredSubMode = 'tensSub'; 
                 else if (isNoBreakSub) preferredSubMode = 'noBreakSub';
@@ -540,15 +639,32 @@
                 else if (isBreakTen) preferredSubMode = 'pingShi'; 
                 
                 if (preferredSubMode) {
-                    // **注意：这里调用是递归的，但它只负责生成文本步骤，不负责画图**
                     calculationDetails = getSingleOpHintSteps(subN1, subN2, '-', preferredSubMode); 
                     calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796]/g, '').trim();
                     calculationDetails.stepsHTML = calculationDetails.stepsHTML.replace(/<span class="formula">.*?<\/span>/s, ''); 
+                    
+                    // 需要重新调整步骤编号
+                    let tempSteps = '';
+                    let tempAnimSteps = [{ delay: 50, stepClass: 'step-1', action: () => {} }]; // 第一步转换，无图变化
+                    calculationDetails.stepsHTML.split('</div>').filter(Boolean).forEach((stepHTML, index) => {
+                        const newStepClass = `step-${index + 2}`;
+                        tempSteps += stepHTML.replace(/step-\d+/, newStepClass) + '</div>';
+                        // 将子动画步骤的 class 也更新
+                        if(calculationDetails.animationSteps[index]) {
+                            calculationDetails.animationSteps[index].stepClass = newStepClass;
+                            tempAnimSteps.push(calculationDetails.animationSteps[index]);
+                        }
+                    });
+                    
+                    calculationDetails.stepsHTML = tempSteps;
+                    calculationDetails.animationSteps = tempAnimSteps;
+
                 } else if (!isSimpleSub) {
                      calculationDetails = { 
-                        stepsHTML: `<div class="modal-step">${stepContent('步骤 2: 直接计算', `：用减法关系 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)} 来求解。`)}</div>`,
+                        stepsHTML: `<div class="modal-step step-2">${stepContent('步骤 2: 直接计算', `：用减法关系 ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)} 来求解。`)}</div>`,
                         formula: `<span class="formula">${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)} ${opRedSpan('=')} ${numRedSpan(n2Answer)}</span>`,
                         title: '基础减法',
+                        animationSteps: staticAnimSteps
                     };
                 }
 
@@ -567,10 +683,11 @@
                 }
 
                 formulaHTML = conversionFormula + calculationFormula; 
-                return { title: t, stepsHTML: s, formula: formulaHTML }; 
+                return { title: t, stepsHTML: s, formula: formulaHTML, animationSteps: calculationDetails.animationSteps }; 
             }
             
             // **3. 标准运算逻辑 (A op B = ?) **
+            let animationSteps = [];
 
             if (op === '+') {
                 const u2 = n2 % 10;
@@ -579,40 +696,78 @@
                 const isCouShi = uSum > 10; 
 
                 if (effectiveMode === 'noCarryAdd' || (!effectiveMode && isNoCarryAdd)) {
+                    // 同位相加法
                     const t1 = Math.floor(n1 / 10), t2 = Math.floor(n2 / 10); 
                     const [t1Span, t2Span] = [numSpan(t1, 'highlight-remain'), numSpan(t2, 'highlight-remain')];
                     const [u1Span, u2Span] = [numSpan(u1, 'highlight-ten'), numSpan(u2, 'highlight-ten')];
                     const tRes = t1 + t2; 
                     
                     t = '➕ 同位相加法 (不进位)';
-                    s = `<div class="modal-step">${stepContent('步骤 1: 个位加个位', `：💪 个位上的 ${u1Span} 加上 ${u2Span}，得到 ${numSpan(uSum, 'highlight-goal')}。`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('步骤 1: 个位加个位', `：💪 个位上的 ${u1Span} 加上 ${u2Span}，得到 ${numSpan(uSum, 'highlight-goal')}。`)}</div>`;
                     if (t1 > 0 || t2 > 0) { 
-                        s += `<div class="modal-step">${stepContent('步骤 2: 十位加十位', `：🧠 十位上的 ${t1Span} 加上 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
+                        s += `<div class="modal-step step-2">${stepContent('步骤 2: 十位加十位', `：🧠 十位上的 ${t1Span} 加上 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
                     }
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+                    
+                    // 动画：静态划线
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {} });
+                    if (t1 > 0 || t2 > 0) { animationSteps.push({ delay: 50, stepClass: 'step-2', action: () => {} }); }
+
 
                 } else if (effectiveMode === 'couShi' || (!effectiveMode && isCouShi && n1 <= 20 && n2 <= 10)) {
+                    // 凑十法
                     const big = Math.max(n1, n2); const small = Math.min(n1, n2);
                     const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
+                    
                     if (rem > 0 || effectiveMode === 'couShi') {
                         const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
                         const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
                         const nextTen = big + need, nextTenSpan = numSpan(nextTen, 'highlight-goal');
                         t = '✨ 凑十法魔法拆分';
-                        s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${need} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
-                        s += `<div class="modal-step">${stepContent('步骤 2: 小数拆分', `：✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
-                        s += `<div class="modal-step">${stepContent('步骤 3: 魔法合体', `：🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
+                        s = `<div class="modal-step step-1">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${need} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
+                        s += `<div class="modal-step step-2">${stepContent('步骤 2: 小数拆分', `：✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
+                        s += `<div class="modal-step step-3">${stepContent('步骤 3: 魔法合体', `：🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
                         formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+                        
+                        // 动画：凑十法
+                        animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => { 
+                             // 步骤 1: 大数高亮，小数变灰
+                             hintVisuals.querySelectorAll('.cs-small-num').forEach(el => el.classList.add('group-inactive'));
+                             hintVisuals.querySelectorAll('.cs-big-num').forEach(el => el.classList.remove('group-inactive'));
+                        }});
+                        animationSteps.push({ delay: 500, stepClass: 'step-2', action: () => { 
+                             // 步骤 2: 拆小数，需要凑 10 的部分高亮
+                             const items = hintVisuals.querySelectorAll('.cs-small-num');
+                             items.forEach(el => el.classList.remove('group-inactive'));
+                             for(let i = 0; i < need; i++) {
+                                 if(items[i]) items[i].classList.add('highlight-orange');
+                             }
+                             for(let i = need; i < small; i++) {
+                                 if(items[i]) items[i].classList.add('group-inactive');
+                             }
+                        }});
+                        animationSteps.push({ delay: 500, stepClass: 'step-3', action: () => { 
+                             // 步骤 3: 合体，前 10 个苹果高亮成绿色，剩下的显示
+                             hintVisuals.querySelectorAll('.visual-item').forEach((el, index) => {
+                                 el.classList.remove('highlight-orange', 'group-inactive');
+                                 if(index < 10) el.classList.add('group-ten');
+                                 else if(index >= 10 && index < big + small) el.classList.add('final-result');
+                             });
+                        }});
                     } else {
+                         // 基础加法，静态
                          t = '基础加法 (直接计算)'; 
-                         s = `<div class="modal-step">${stepContent('直接计算', `：直接将 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} 相加，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
+                         s = `<div class="modal-step step-1">${stepContent('直接计算', `：直接将 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} 相加，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
                          formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+                         animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {} });
                     }
                 
                 } else {
+                     // 基础加法，静态
                      t = '基础加法 (直接计算)'; 
-                     s = `<div class="modal-step">${stepContent('直接计算', `：直接将 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} 相加，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
+                     s = `<div class="modal-step step-1">${stepContent('直接计算', `：直接将 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} 相加，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
                      formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+                     animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {} });
                 }
             } else if (op === '-') { 
                 const u2 = n2 % 10;
@@ -626,8 +781,17 @@
                 if (isSimpleTenSub || (!isBreakTen && !isNoBreakSub && !isTensSub)) {
                      // 基础计算 (如 19-10)
                      t = '基础减法 (同位相减)';
-                     s = `<div class="modal-step">${stepContent('直接计算 (同位相减)', `：个位 ${numSpan(u1, 'highlight-remain')} 减去 ${numSpan(u2, 'highlight-remain')}，十位 ${numSpan(Math.floor(n1/10), 'highlight-remain')} 减去 ${numSpan(Math.floor(n2/10), 'highlight-remain')}。`)}</div>`;
+                     s = `<div class="modal-step step-1">${stepContent('直接计算 (同位相减)', `：个位 ${numSpan(u1, 'highlight-remain')} 减去 ${numSpan(u2, 'highlight-remain')}，十位 ${numSpan(Math.floor(n1/10), 'highlight-remain')} 减去 ${numSpan(Math.floor(n2/10), 'highlight-remain')}。`)}</div>`;
                      formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+                     animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => { 
+                         // 静态减法划掉
+                         const items = hintVisuals.querySelectorAll('.visual-item');
+                         for(let i = 0; i < n2; i++) {
+                             if(items[items.length - 1 - i]) {
+                                 items[items.length - 1 - i].classList.add('is-subtracted');
+                             }
+                         }
+                      }});
 
                 } else if (effectiveMode === 'noBreakSub' || (!effectiveMode && isNoBreakSub)) {
                     // 1. 同位相减法 (不破十) 
@@ -637,25 +801,65 @@
                     const tRes = t1 - t2; const uRes = u1 - u2; 
 
                     t = '✅ 同位相减法 (不破十)';
-                    s = `<div class="modal-step">${stepContent('步骤 1: 个位减个位', `：💪 个位上的 ${u1Span} 减去 ${u2Span}，得到 ${numSpan(uRes, 'highlight-goal')}。`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('步骤 1: 个位减个位', `：💪 个位上的 ${u1Span} 减去 ${u2Span}，得到 ${numSpan(uRes, 'highlight-goal')}。`)}</div>`;
                     if (t2 > 0) { 
-                        s += `<div class="modal-step">${stepContent('步骤 2: 十位减十位', `：🧠 十位上的 ${t1Span} 减去 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
+                        s += `<div class="modal-step step-2">${stepContent('步骤 2: 十位减十位', `：🧠 十位上的 ${t1Span} 减去 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
                     } else if (t1 > 0) { 
-                        s += `<div class="modal-step">${stepContent('步骤 2: 保留十位', `：🧠 减数没有十位，保留 ${t1Span} (1个十)。`)}</div>`;
+                        s += `<div class="modal-step step-2">${stepContent('步骤 2: 保留十位', `：🧠 减数没有十位，保留 ${t1Span} (1个十)。`)}</div>`;
                     }
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
                     isCustomMethod = true;
+                    
+                    // 动画：静态划线
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {
+                         // 划掉个位 u2 个
+                         const items = hintVisuals.querySelectorAll('.visual-item');
+                         for(let i = 0; i < u2; i++) {
+                             if(items[n1 - 1 - i]) {
+                                 items[n1 - 1 - i].classList.add('is-subtracted');
+                             }
+                         }
+                    }});
+                    if (t2 > 0) { animationSteps.push({ delay: 50, stepClass: 'step-2', action: () => {
+                         // 划掉十位 t2 个
+                         const items = hintVisuals.querySelectorAll('.visual-item');
+                         for(let i = 0; i < t2; i++) {
+                             if(items[9 - i]) { 
+                                 items[9 - i].classList.add('is-subtracted'); 
+                             }
+                         }
+                    }}); }
                     
                 } else if (effectiveMode === 'jieShi' || (!effectiveMode && isBreakTen && n1 <= 20)) {
                     // 2. 借十法 
                     const tMinusN2 = 10 - n2;
                     t = '⚡ 借十法 (破十法)';
                     const [u1Span, tMinusN2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal')];
-                    s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
+                    s += `<div class="modal-step step-2">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
+                    s += `<div class="modal-step step-3">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${numSpan(10, 'highlight-goal')} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
                     isCustomMethod = true;
+
+                    // 动画：借十法
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {
+                         // 步骤 1: 个位变灰，十位高亮 (准备被借)
+                         hintVisuals.querySelectorAll('.js-unit-group').forEach(el => el.classList.add('group-inactive'));
+                         hintVisuals.querySelectorAll('.js-ten-group').forEach(el => el.classList.add('highlight-red'));
+                    }});
+                    animationSteps.push({ delay: 500, stepClass: 'step-2', action: () => {
+                         // 步骤 2: 10 减去 n2，将前 10 个苹果中的 n2 个划掉
+                         hintVisuals.querySelectorAll('.js-ten-group').forEach((el, index) => {
+                             el.classList.remove('highlight-red');
+                             if (index < n2) el.classList.add('is-subtracted');
+                         });
+                    }});
+                    animationSteps.push({ delay: 500, stepClass: 'step-3', action: () => {
+                         // 步骤 3: 剩余的 tMinusN2 个苹果和个位合并，全部高亮为最终结果
+                         hintVisuals.querySelectorAll('.js-unit-group').forEach(el => el.classList.remove('group-inactive'));
+                         hintVisuals.querySelectorAll('.visual-item:not(.is-subtracted)').forEach(el => el.classList.add('final-result'));
+                    }});
+                    
 
                 } else if (effectiveMode === 'pingShi' || (!effectiveMode && isBreakTen)) { 
                     // 3. 平十法
@@ -664,34 +868,66 @@
                     t = '📏 平十法 (连减法)';
                     const [remSpan, tenRemSpan] = [numSpan(rem, 'highlight-remain'), numSpan(tenRem, 'highlight-goal')];
                     const u1Span = numSpan(u1, 'highlight-ten');
-                    s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
+                    s += `<div class="modal-step step-2">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
+                    s += `<div class="modal-step step-3">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
                     isCustomMethod = true;
 
+                    // 动画：平十法
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {
+                         // 步骤 1: 减数 n2 个苹果变黄 (待拆分)
+                         // (在 renderVisualHelpers 中，只有 n1 个苹果，所以我们只对减数进行概念性高亮)
+                         // 这里暂时使用静态划掉 u1 个
+                         hintVisuals.querySelectorAll('.js-unit-group').forEach(el => el.classList.add('is-subtracted'));
+                    }});
+                    animationSteps.push({ delay: 500, stepClass: 'step-2', action: () => {
+                         // 步骤 2: 再减剩下的 rem 个 (从十位中减)
+                         const tenGroup = hintVisuals.querySelectorAll('.js-ten-group');
+                         for (let i = 0; i < rem; i++) {
+                             if (tenGroup[tenGroup.length - 1 - i]) tenGroup[tenGroup.length - 1 - i].classList.add('is-subtracted');
+                         }
+                    }});
+                    animationSteps.push({ delay: 500, stepClass: 'step-3', action: () => {
+                         // 步骤 3: 剩下 res 个高亮
+                         hintVisuals.querySelectorAll('.visual-item:not(.is-subtracted)').forEach(el => el.classList.add('final-result'));
+                    }});
+
+
                 } else if (effectiveMode === 'tensSub' || (!effectiveMode && isTensSub)) {
-                    // 4. 整十数减法
+                    // 4. 整十数减法 (静态，因为数字太大画不了)
                     t = '🔢 整十数减法 (连减法思路)';
                     const n2Ten = Math.floor(n2 / 10) * 10; 
                     const n2Unit = n2 % 10; 
                     const iR = n1 - n2Ten;
                     const [n2TenSpan, n2UnitSpan, iRSpan] = [numSpan(n2Ten, 'highlight-ten'), numSpan(n2Unit, 'highlight-remain'), numSpan(iR, 'highlight-goal')];
-                    s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${n2TenSpan} (整十数) 和 ${n2UnitSpan} (个位)。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 2: 先减整十', `：💪 ${n1Red} 先减去 ${n2TenSpan}，得到 ${iRSpan}。`)}</div>`;
-                    s += `<div class="modal-step">${stepContent('步骤 3: 再减个位', `：🏃 用 ${iRSpan} 再减去剩下的 ${n2UnitSpan}，得到结果 ${resRed}。`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${n2TenSpan} (整十数) 和 ${n2UnitSpan} (个位)。`)}</div>`;
+                    s += `<div class="modal-step step-2">${stepContent('步骤 2: 先减整十', `：💪 ${n1Red} 先减去 ${n2TenSpan}，得到 ${iRSpan}。`)}</div>`;
+                    s += `<div class="modal-step step-3">${stepContent('步骤 3: 再减个位', `：🏃 用 ${iRSpan} 再减去剩下的 ${n2UnitSpan}，得到结果 ${resRed}。`)}</div>`;
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${n2TenSpan} ${parenRedSpan(')')} ${opRedSpan('-')} ${n2UnitSpan} ${opRedSpan('=')} ${iRSpan} ${opRedSpan('-')} ${n2UnitSpan} ${opRedSpan('=')} ${resRed}</span>`;
                     isCustomMethod = true;
-                }
+                    // 动画：静态划线
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => {} });
+                    animationSteps.push({ delay: 50, stepClass: 'step-2', action: () => {} });
+                    animationSteps.push({ delay: 50, stepClass: 'step-3', action: () => {} });
 
-                if (!isCustomMethod && t === '') {
+                } else if (!isCustomMethod && t === '') {
                     t = '基础减法 (直接计算)';
-                    s = `<div class="modal-step">${stepContent('直接计算', `：直接计算 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')}，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
+                    s = `<div class="modal-step step-1">${stepContent('直接计算', `：直接计算 ${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')}，得到 ${numSpan(res, 'highlight-goal')}。`)}</div>`;
                     formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+                    animationSteps.push({ delay: 50, stepClass: 'step-1', action: () => { 
+                         // 静态减法划掉
+                         const items = hintVisuals.querySelectorAll('.visual-item');
+                         for(let i = 0; i < n2; i++) {
+                             if(items[items.length - 1 - i]) {
+                                 items[items.length - 1 - i].classList.add('is-subtracted');
+                             }
+                         }
+                      }});
                 }
             }
 
-            return { title: t, stepsHTML: s, formula: formulaHTML }; 
+            return { title: t, stepsHTML: s, formula: formulaHTML, animationSteps: animationSteps }; 
         }
 
         // --- 模态框和报告逻辑 ---
@@ -701,66 +937,94 @@
             hintModal.style.display = 'block';
             hintVisuals.innerHTML = ''; // 清空旧图
 
-            // --- 🍎 核心修改：统一画图逻辑 ---
-            if (num3 !== null && num3 !== undefined) {
-                // 1. 连续运算：画第一步 (num1 op1 num2)
-                renderVisualHelpers(hintVisuals, num1, num2, operator1);
+            // --- 🍎 统一画图和动画数组初始化 ---
+            let details;
             
-            } else if (unknownPosition === 'n2') {
-                // 2. 未知数求值：计算转换后的减法并画图
-                const n1Known = num1;
-                const n2Answer = answer; 
-                // C (结果) = A + B (answer) 或 A - B (answer)
-                const knownResult = n1Known + (operator1 === '+' ? n2Answer : -n2Answer); 
-                
-                let subN1, subN2; // 转换后的减数和被减数 (例如 15 - 6)
-
-                if (operator1 === '-') {
-                    // 如果 A - ? = C，转换成 A - C = ?
-                    subN1 = n1Known; subN2 = knownResult; 
-                } else if (operator1 === '+') {
-                    // 如果 A + ? = C，转换成 C - A = ?
-                    subN1 = knownResult; subN2 = n1Known; 
-                }
-
-                // 使用转换后的减法算式来绘制视觉辅助图
-                renderVisualHelpers(hintVisuals, subN1, subN2, '-'); 
-                
-            } else {
-                // 3. 标准运算：直接画 num1 op1 num2
-                renderVisualHelpers(hintVisuals, num1, num2, operator1); 
-            }
-            // --- 🍎 结束：统一画图逻辑 ---
-
-
             if (num3 !== null && num3 !== undefined) {
+                // 1. 连续运算：画第一步 (静态)
+                renderVisualHelpers(hintVisuals, num1, num2, operator1, 'continuous');
+                
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
                 const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null); 
-                hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
-                s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`; 
-                s += firstStepDetails.stepsHTML; 
-                s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
                 const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, null); 
-                s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
-                s += secondStepDetails.stepsHTML; 
-                finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
+                
+                details = {
+                    title: `连续运算分步解析`,
+                    stepsHTML: `
+                        <div class="modal-step step-1" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2} (方法：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
+                        ${firstStepDetails.stepsHTML.replace(/step-\d+/g, 'sub-step')}
+                        <div class="modal-step step-2">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
+                        ${secondStepDetails.stepsHTML.replace(/step-\d+/g, 'sub-step')}
+                    `,
+                    formula: `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`,
+                    animationSteps: [{ delay: 50, stepClass: 'step-1', action: () => {} }] // 连续运算只展示步骤，图静止
+                };
+
             } else {
-                // 标准或未知数问题
+                // 标准或未知数问题 (先画图，再计算步骤)
                 const originalProblem = currentProblem;
                 currentProblem = problem;
-                const details = getSingleOpHintSteps(num1, num2, operator1, specificMode);
-                currentProblem = originalProblem;
-                hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
-                s = details.stepsHTML;
-                finalFormula = details.formula;
+                
+                let modeToDraw = specificMode;
+                let drawN1 = num1, drawN2 = num2, drawOp = operator1;
+                
+                if (unknownPosition === 'n2') {
+                    // 求解未知数时，画图基于转换后的减法
+                    modeToDraw = 'sub';
+                    const n1Known = num1;
+                    const n2Answer = answer; 
+                    const knownResult = n1Known + (operator1 === '+' ? n2Answer : -n2Answer); 
+                    if (operator1 === '-') { drawN1 = n1Known; drawN2 = knownResult; drawOp = '-'; } 
+                    else { drawN1 = knownResult; drawN2 = n1Known; drawOp = '-'; } 
+                }
+
+                // **核心画图调用**
+                renderVisualHelpers(hintVisuals, drawN1, drawN2, drawOp, modeToDraw); 
+
+                // **核心步骤计算**
+                details = getSingleOpHintSteps(num1, num2, operator1, specificMode);
+                currentProblem = originalProblem; // 恢复当前问题
+
             }
-            hintModalSteps.innerHTML = s + finalFormula; 
-            const steps = hintModalSteps.querySelectorAll('.modal-step');
-            steps.forEach(step => step.classList.add('fade-start')); 
-            steps.forEach((step, index) => {
-                setTimeout(() => { step.classList.remove('fade-start'); step.classList.add('fade-end'); }, 100 + index * 450);
-            });
+            
+            hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
+            hintModalSteps.innerHTML = details.stepsHTML + details.formula; 
+            
+            // --- 动态步骤播放逻辑 ---
+            const allSteps = hintModalSteps.querySelectorAll('.modal-step');
+            
+            // 确保清除所有活动类
+            allSteps.forEach(step => step.classList.remove('active-step'));
+            hintVisuals.querySelectorAll('.visual-item').forEach(el => el.classList.remove('is-subtracted', 'group-inactive', 'highlight-red', 'highlight-orange', 'group-ten', 'final-result'));
+
+            let stepIndex = 0;
+            const playNextStep = () => {
+                if (stepIndex >= allSteps.length) return;
+
+                const currentStepEl = allSteps[stepIndex];
+                const animStep = details.animationSteps.find(a => a.stepClass === currentStepEl.classList.item(1));
+                
+                // 1. 移除上一步高亮，高亮当前步骤
+                if (stepIndex > 0) allSteps[stepIndex - 1].classList.remove('active-step');
+                currentStepEl.classList.add('active-step');
+                
+                // 2. 执行动画
+                if (animStep && animStep.action) {
+                    // 确保有延迟，避免动画被跳过
+                    setTimeout(() => {
+                        animStep.action();
+                    }, animStep.delay);
+                }
+
+                // 3. 递归调用
+                stepIndex++;
+                setTimeout(playNextStep, 2500); // 每个步骤之间间隔 2.5 秒
+            };
+
+            // 延迟开始播放动画，让用户有时间聚焦
+            setTimeout(playNextStep, 500); 
         }
+
         
         const closeHintModal = () => { hintModal.style.display = 'none'; };
         const closeExamModal = () => { examModal.style.display = 'none'; switchMode(modeSelect.value); };
@@ -845,7 +1109,7 @@
             feedbackEl.textContent = `考试结束，得分 ${score.toFixed(0)} 分`; feedbackEl.className = 'feedback-correct';
         }
 
-        // --- 答案检查和问题生成 ---
+        // --- 答案检查和问题生成 (与上版一致) ---
         const checkAnswer = () => {
             if (isSubmitting || (isExamMode && examCurrentQuestion >= EXAM_TOTAL_QUESTIONS)) { return; }
             const uA = parseInt(ansInput.value.trim());
