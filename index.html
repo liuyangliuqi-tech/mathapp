@@ -344,7 +344,8 @@
         <div class="modal-content">
             <span class="modal-close" id="hintModalClose">&times;</span>
             <div id="hintModalTitle" class="modal-title"></div>
-            <div id="hintVisuals"></div> <div id="hintModalSteps"></div>
+            <div id="hintVisuals"></div> 
+            <div id="hintModalSteps"></div>
         </div>
     </div>
 
@@ -405,10 +406,17 @@
         const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
         const stepContent = (title, content) => `<strong>${title}</strong>${content}`; 
 
-        // --- 可视化画图函数 (新增) ---
+        // --- 可视化画图函数 ---
         function renderVisualHelpers(container, n1, n2, op) {
             container.innerHTML = ''; // 清空旧图
-            if (n1 > 30) return; // 数字太大不画图，避免拥挤
+            if (n1 > 30) {
+                 // 如果数字太大，不画图，但可以加一个提示
+                 const msg = document.createElement('div');
+                 msg.className = 'visual-legend';
+                 msg.textContent = `(数字较大，此处不绘制详细苹果图)`;
+                 container.appendChild(msg);
+                 return; 
+            }
 
             const wrapper = document.createElement('div');
             wrapper.className = 'visual-container';
@@ -435,7 +443,7 @@
                 legend.textContent = `🍎 ${n1} 个 + 🍏 ${n2} 个 = ${total} 个`;
                 wrapper.appendChild(legend);
 
-            } else {
+            } else { // 减法
                 // 减法：画 n1 个红苹果，把最后 n2 个变灰
                 for (let i = 0; i < n1; i++) {
                     // 判断是否是被减去的部分 (最后 n2 个)
@@ -474,7 +482,7 @@
             examModal.style.display = 'none';
         }
 
-        // --- 提示步骤逻辑 (保持之前所有的修复) ---
+        // --- 提示步骤逻辑 ---
         function getSingleOpHintSteps(n1, n2, op, forcedMode = null) {
             let s = '', t = '';
             const effectiveMode = (forcedMode || (['add', 'sub', 'mixed', 'continuous'].includes(currentMode) ? null : currentMode));
@@ -509,13 +517,13 @@
 
                 s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
 
-                // --- 计算步骤 ---
+                // --- 计算步骤 (使用转换后的 subN1 - subN2) ---
                 const uSubN1 = subN1 % 10;
                 const uSubN2 = subN2 % 10;
                 const isBreakTen = subN1 > 10 && uSubN2 > uSubN1;
                 const isTensSub = subN1 % 10 === 0 && subN2 > 0; 
                 const isNoBreakSub = subN1 > 10 && uSubN2 <= uSubN1;
-                const isSimpleSub = subN1 <= 10 || (subN1 > 10 && subN2 <= uSubN1 && subN2 <= 10) || (subN1 > 10 && (subN2 === 10 || subN2 === 20));
+                const isSimpleSub = subN1 <= 10 || (subN1 > 10 && uSubN2 <= uSubN1 && uSubN2 <= 10) || (subN1 > 10 && (subN2 === 10 || subN2 === 20));
 
                 let calculationTitle = '基础减法';
                 let preferredSubMode = null; 
@@ -532,6 +540,7 @@
                 else if (isBreakTen) preferredSubMode = 'pingShi'; 
                 
                 if (preferredSubMode) {
+                    // **注意：这里调用是递归的，但它只负责生成文本步骤，不负责画图**
                     calculationDetails = getSingleOpHintSteps(subN1, subN2, '-', preferredSubMode); 
                     calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796]/g, '').trim();
                     calculationDetails.stepsHTML = calculationDetails.stepsHTML.replace(/<span class="formula">.*?<\/span>/s, ''); 
@@ -545,9 +554,6 @@
 
                 s += calculationDetails.stepsHTML; 
                 t += ` (计算使用：${calculationTitle})`; 
-                
-                // 添加画图逻辑 (转换后的减法)
-                renderVisualHelpers(hintVisuals, subN1, subN2, '-');
 
                 const conversionFormula = `<span class="formula" style="font-size: clamp(16px, 3vw, 20px); margin-top: 0; margin-bottom: 0.5vh; color: var(--color-apple-orange);">${numRedSpan(n1Known)} ${opRedSpan(op)} ? ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ? ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan('-')} ${numRedSpan(subN2)}</span>`;
                 
@@ -565,11 +571,6 @@
             }
             
             // **3. 标准运算逻辑 (A op B = ?) **
-            
-            // 在这里调用画图逻辑 (正常算式)
-            if (!forcedMode) { 
-                renderVisualHelpers(hintVisuals, n1, n2, op);
-            }
 
             if (op === '+') {
                 const u2 = n2 % 10;
@@ -693,16 +694,47 @@
             return { title: t, stepsHTML: s, formula: formulaHTML }; 
         }
 
-        // --- 模态框和报告逻辑 (保持不变) ---
+        // --- 模态框和报告逻辑 ---
         function generateHintSteps(problem, problemIndex = null) {
             const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = problem;
             let s = '', finalFormula = '';
             hintModal.style.display = 'block';
             hintVisuals.innerHTML = ''; // 清空旧图
+
+            // --- 🍎 核心修改：统一画图逻辑 ---
+            if (num3 !== null && num3 !== undefined) {
+                // 1. 连续运算：画第一步 (num1 op1 num2)
+                renderVisualHelpers(hintVisuals, num1, num2, operator1);
             
+            } else if (unknownPosition === 'n2') {
+                // 2. 未知数求值：计算转换后的减法并画图
+                const n1Known = num1;
+                const n2Answer = answer; 
+                // C (结果) = A + B (answer) 或 A - B (answer)
+                const knownResult = n1Known + (operator1 === '+' ? n2Answer : -n2Answer); 
+                
+                let subN1, subN2; // 转换后的减数和被减数 (例如 15 - 6)
+
+                if (operator1 === '-') {
+                    // 如果 A - ? = C，转换成 A - C = ?
+                    subN1 = n1Known; subN2 = knownResult; 
+                } else if (operator1 === '+') {
+                    // 如果 A + ? = C，转换成 C - A = ?
+                    subN1 = knownResult; subN2 = n1Known; 
+                }
+
+                // 使用转换后的减法算式来绘制视觉辅助图
+                renderVisualHelpers(hintVisuals, subN1, subN2, '-'); 
+                
+            } else {
+                // 3. 标准运算：直接画 num1 op1 num2
+                renderVisualHelpers(hintVisuals, num1, num2, operator1); 
+            }
+            // --- 🍎 结束：统一画图逻辑 ---
+
+
             if (num3 !== null && num3 !== undefined) {
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
-                renderVisualHelpers(hintVisuals, num1, num2, operator1);
                 const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null); 
                 hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
                 s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`; 
@@ -713,6 +745,7 @@
                 s += secondStepDetails.stepsHTML; 
                 finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
             } else {
+                // 标准或未知数问题
                 const originalProblem = currentProblem;
                 currentProblem = problem;
                 const details = getSingleOpHintSteps(num1, num2, operator1, specificMode);
