@@ -384,8 +384,9 @@
         const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] = 
             ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
         
+        // **修正了这里的map函数调用：确保每个元素都获取到正确的ID**
         const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
-            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe('examModalClose'));
+            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
         
         const examReportContent = getElementByIdSafe('examReportContent'); 
 
@@ -588,7 +589,7 @@
                  // Unknown must maintain JieShi property (B%10 > A%10)
                 if (Math.random() < 0.5) { // ? - B = C (n1)
                     let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n1_calc <= 10 || n1_calc % 10 <= n2) throw new Error('Retry JieShi n1 calc');
+                    if (n1_calc > maxNum || n1_calc <= 10 || n2 > n1_calc % 10) throw new Error('Retry JieShi n1 calc');
                     problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
                 } else { // A - ? = C (n2)
                     let n2_calc = n1 - res;
@@ -774,7 +775,8 @@
             
             } catch (error) {
                 console.error("Problem generation error:", error.message || error); 
-                currentProblem = { num1: 12, num2: 5, operator1: '+', num3: null, operator2: null, answer: 17, unknownPosition: 'res', specificMode: 'add' };
+                // !!! 修正：将硬编码的回退加法题改为标准的借十法减法题
+                currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode }; 
             }
 
             const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = currentProblem;
@@ -947,12 +949,10 @@
                          t = '🧮 求解未知被减数 (? = C + B)';
                          conversionText = `：🔍 未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
                          
-                         // **修正：使用匹配的加法方法**
                          const u1 = subN1 % 10, u2 = subN2 % 10;
                          const isCouShi = u1 + u2 > 9; 
                          const addFunc = isCouShi ? getCouShiSteps : getNoCarryAddSteps;
                          calculationDetails = addFunc(subN1, subN2, n2Answer);
-                         // **修正结束**
 
                     } else { // unknownPos === 'n2', A - ? = C -> ? = A - C (减法)
                          subN1 = n1; subN2 = knownResult; 
