@@ -531,6 +531,7 @@
         // --- 提示步骤逻辑 (静态版本) ---
         function getSingleOpHintSteps(n1, n2, op, forcedMode = null) {
             let s = '', t = '';
+            let formulaHTML = ''; // 确保 formulaHTML 在函数范围内定义
             const effectiveMode = (forcedMode || (['add', 'sub', 'mixed', 'continuous'].includes(currentMode) ? null : currentMode));
             const res = op === '+' ? n1 + n2 : n1 - n2; 
             const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
@@ -582,6 +583,7 @@
                 else if (isBreakTen) preferredSubMode = 'pingShi'; 
                 
                 if (preferredSubMode) {
+                    // 递归调用，获取详细计算步骤
                     calculationDetails = getSingleOpHintSteps(subN1, subN2, '-', preferredSubMode); 
                     calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796]/g, '').trim();
                     calculationDetails.stepsHTML = calculationDetails.stepsHTML.replace(/<span class="formula">.*?<\/span>/s, ''); 
