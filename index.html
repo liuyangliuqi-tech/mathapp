@@ -1,376 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>刘书语的魔法数学特训营</title> 
-    <link rel="manifest" href="/manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
-    <meta name="apple-mobile-web-app-title" content="数学特训营">
-    
-    <style>
-        /* --- 通用样式 --- */
-        * { touch-action: manipulation; box-sizing: border-box; }
-        :root {
-            --color-apple-blue: #007aff; --color-apple-green: #34c759; 
-            --color-apple-red: #ff3b30; --color-apple-orange: #ff9500; 
-            --color-background-soft: #f2f2f7; --color-card-bg: #f7f7f9;
-            --color-text-dark: #1d1d1f; --color-button-secondary: #e5e5ea;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--color-background-soft); color: var(--color-text-dark);
-            margin: 0; padding: 0; display: flex; justify-content: center; 
-            min-height: 100vh; padding-bottom: 20px; -webkit-text-size-adjust: 100%; 
-        }
-        .container {
-            width: 100%; max-width: 900px; background-color: #ffffff; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); padding: 2vh 4vw; 
-            text-align: center; display: flex; flex-direction: column; 
-            align-items: center; min-height: 10vh; 
-        }
-        .header-section { width: 100%; flex-shrink: 0; padding-top: 1vh; display: flex; flex-direction: column; align-items: center; }
-        h1 { font-size: clamp(24px, 3.5vw, 32px); font-weight: 700; margin-bottom: 0.5vh; }
-        .tagline { font-size: clamp(14px, 2vw, 16px); color: #555; margin-bottom: 1.5vh; }
-        .mode-switch-group { width: 90%; max-width: 500px; margin-bottom: 2vh; }
-        .mode-select {
-            width: 100%; padding: 1.5vh 12px; font-size: clamp(14px, 2.2vw, 16px);
-            border-radius: 10px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08); 
-            appearance: none; -webkit-appearance: none; -moz-appearance: none; border: 1px solid #ccc;
-        }
-        .score-board {
-            display: flex; justify-content: space-around; margin-top: 1vh; margin-bottom: 2.5vh; 
-            padding: 1.5vh 10px; background-color: var(--color-card-bg); border-radius: 12px; 
-            width: 80%; max-width: 500px;
-        }
-        .score-item { font-size: clamp(14px, 2.5vw, 16px); font-weight: 500; }
-        .score-item span { color: var(--color-apple-blue); font-weight: 700; }
-        .main-calculation-area { 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            width: 100%; padding-top: 2vh; padding-bottom: 2vh; position: relative; 
-        }
-        .math-problem { 
-            font-size: 11vw; font-weight: 800; margin: 1vh 0; min-height: 15vw; 
-            display: flex; justify-content: center; align-items: center; gap: 15px;
-        }
-        .math-problem.three-op { font-size: 8vw; }
-        @media (max-width: 600px) {
-            .math-problem { font-size: 15vw; gap: 10px; }
-            .math-problem.three-op { font-size: 10vw; }
-        }
-        .input-wrapper { 
-            margin-top: 4vh; margin-bottom: 5vh; display: flex; flex-wrap: wrap; 
-            justify-content: center; gap: 10px; width: 100%; max-width: 400px; 
-        }
-        #answerInput { 
-            padding: 2vh 15px; font-size: clamp(20px, 3.5vw, 24px); border-radius: 10px; 
-            margin-bottom: 10px; width: clamp(150px, 40vw, 200px); transition: all 0.2s; 
-            border: 1px solid #ccc; text-align: center;
-        }
-        .wrong-flash {
-            border: 2px solid var(--color-apple-red) !important;
-            box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); animation: shake 0.5s;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-        #newProblemButton {
-            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
-            background-color: var(--color-button-secondary); color: var(--color-text-dark);
-            border-radius: 10px; border: none; cursor: pointer; transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
-        }
-        @media (min-width: 601px) {
-             #newProblemButton.icon-mode {
-                 position: absolute; top: 50%; right: 5%; transform: translateY(-50%);
-                 padding: 10px; font-size: 20px; border-radius: 50%; width: 40px; height: 40px;
-                 display: flex; align-items: center; justify-content: center;
-                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); opacity: 0.8; z-index: 10;
-             }
-             #newProblemButton .button-text { display: none; }
-        }
-        #submitButton, #hintButton { 
-            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
-            border-radius: 10px; border: none; cursor: pointer; 
-            transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
-        }
-        #submitButton { background-color: var(--color-apple-blue); color: white; }
-        #hintButton { background-color: var(--color-apple-orange); color: var(--color-text-dark); }
-        
-        #hintButton:disabled, #newProblemButton:disabled, #submitButton:disabled {
-            opacity: 0.5; cursor: not-allowed;
-        }
-
-        @media (max-width: 600px) {
-            .input-wrapper { flex-direction: column; align-items: center; padding: 0 5%; max-width: 100%; }
-            #answerInput { width: 100%; max-width: 250px; }
-            #submitButton, #hintButton, #newProblemButton { 
-                width: 100%; max-width: 250px; margin-bottom: 5px; position: static; transform: none; padding: 2vh 4vw; 
-            }
-            #newProblemButton .button-text { display: inline-block; }
-        }
-        #feedback { font-size: clamp(18px, 3vw, 22px); font-weight: 700; color: var(--color-text-dark); min-height: 4vh; }
-        .feedback-correct { color: var(--color-apple-green); }
-        .feedback-wrong { color: var(--color-apple-red); }
-        .vfx-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 1px; height: 1px; pointer-events: none; overflow: visible; z-index: 50; 
-        }
-        .correct-vfx {
-            position: absolute; font-size: 20px; color: gold; text-shadow: 0 0 5px orange;
-            animation: flyout 1s ease-out forwards; opacity: 0;
-        }
-        @keyframes flyout {
-            0% { opacity: 1; transform: translate(0, 0) scale(1); }
-            25% { opacity: 1; }
-            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
-        }
-        
-        /* --- 模态框通用样式 --- */
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
-        }
-        #hintModal { z-index: 1050; } 
-        
-        /* 模态框内容样式 */
-        #examModal .modal-content, #hintModal .modal-content {
-            background-color: #ffffff; margin: 5vh auto; padding: 3vh 4vw; border-radius: 20px; 
-            width: 95%; max-width: 700px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); 
-            animation: modalopen 0.4s ease-out; text-align: left; 
-            max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
-        }
-        
-        .modal-title { font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--color-text-dark); margin-bottom: 2vh; border-bottom: 2px solid #ddd; padding-bottom: 1vh; }
-        .modal-close { float: right; font-size: clamp(24px, 5vw, 32px); font-weight: 300; cursor: pointer; color: #888; transition: color 0.2s; }
-        
-        /* --- 可视化辅助画图样式 (10格阵) --- */
-        .visual-container {
-            margin: 15px 0;
-            padding: 15px;
-            background-color: #fcfcfc;
-            border: 2px dashed #ddd;
-            border-radius: 12px;
-            display: grid; /* 使用 Grid 布局 */
-            grid-template-columns: repeat(10, 1fr); /* 强制一行10个 */
-            gap: 8px;
-            justify-items: center; /* 水平居中 */
-            align-items: center; /* 垂直居中 */
-            max-width: 100%;
-        }
-        
-        /* 每个小物品的样式 */
-        .visual-item {
-            width: 32px; height: 32px;
-            font-size: 20px;
-            display: flex; align-items: center; justify-content: center;
-            background-color: var(--color-apple-red);
-            color: white;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border: 1px solid #d0d0d0;
-        }
-        
-        /* 手机端适配：缩小图标 */
-        @media (max-width: 500px) {
-            .visual-container { gap: 4px; padding: 10px 5px; }
-            .visual-item { width: 24px; height: 24px; font-size: 14px; }
-        }
-
-        /* 减法被减掉的样式 */
-        .is-subtracted {
-            opacity: 0.3;
-            background-color: #f5f5f5 !important;
-            border: 1px solid #ccc !important;
-            color: #777;
-            text-decoration: line-through;
-            transition: opacity 0.5s;
-        }
-        
-        /* 加法中被加数的颜色 (默认) */
-        .add-n1 { background-color: var(--color-apple-red); }
-        /* 加法中加数的颜色 */
-        .add-n2 { background-color: var(--color-apple-green); }
-        
-        .visual-legend {
-            grid-column: 1 / -1; /* 占满整行 */
-            font-size: 14px; color: #555; text-align: center; margin-top: 10px; font-weight: 600;
-            border-top: 1px solid #eee;
-            padding-top: 8px;
-            width: 100%;
-        }
-
-        /* --- 提示步骤样式 --- */
-        .modal-step {
-            margin-bottom: 1.5vh; 
-            font-size: clamp(15px, 2.5vw, 18px); 
-            line-height: 1.6;
-            padding: 10px; 
-            border-left: 4px solid #ddd;
-            opacity: 0;
-            transform: translateX(-10px);
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out, border-left 0.5s ease;
-        }
-        /* 动画起始状态 */
-        .modal-step.fade-start {
-            opacity: 1;
-            transform: translateX(0);
-            border-left: 4px solid var(--color-apple-blue); 
-            background-color: var(--color-card-bg);
-        }
-        /* 动画结束状态 (变淡) */
-        .modal-step.fade-end {
-            opacity: 0.5;
-            transform: translateX(0);
-            border-left: 4px solid #ddd;
-            background-color: transparent;
-        }
-
-        .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; } 
-        
-        /* 强调色定义 */
-        .highlight-ten { color: var(--color-apple-orange); font-weight: 700; } 
-        .highlight-goal { color: var(--color-apple-green); font-weight: 700; } 
-        .highlight-remain { color: var(--color-apple-blue); font-weight: 700; } 
-        
-        /* 公式样式优化 */
-        .formula { 
-            font-size: clamp(18px, 3.5vw, 24px); font-weight: 800; color: var(--color-text-dark); 
-            display: block; margin-top: 2vh; margin-bottom: 2vh; text-align: center; 
-            background-color: var(--color-card-bg); padding: 1.5vh; border-radius: 10px; 
-            letter-spacing: 1px; box-shadow: 0 0 3px rgba(0, 0, 0, 0.05);
-        }
-        .formula .op-red { color: var(--color-apple-red); }
-        .formula .num-red { color: var(--color-apple-red); }
-
-        @keyframes modalopen {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        /* --- 成绩单样式 --- */
-        #examReportContent {
-            padding-bottom: 20px; position: relative; 
-            background-color: #fff; border-radius: 15px; border: 2px solid #ccc;
-        }
-        .exam-report-inner { padding: 20px; }
-        .report-header { 
-            text-align: center; margin-bottom: 20px; max-width: 90%; margin-left: auto; margin-right: auto;
-        }
-        .report-header h3 { 
-            font-size: 26px; font-weight: 800; color: var(--color-text-dark); margin: 0; 
-            border-bottom: 3px double #333; padding-bottom: 5px; white-space: nowrap; 
-        }
-        .info-row { 
-            display: flex; justify-content: space-around; font-size: 16px; 
-            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px dashed #ddd; width: 100%; 
-        }
-        .info-item { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .info-item span { font-weight: 700; color: var(--color-apple-blue); }
-        .score-box {
-            position: absolute; top: 10px; right: 20px; 
-            width: 80px; height: 80px; border: 2px solid var(--color-apple-red);
-            border-radius: 5px; display: flex; align-items: center; justify-content: center;
-            font-size: 36px; font-weight: 800; color: var(--color-apple-red); line-height: 1;
-        }
-        .problem-list { margin-top: 10px; list-style: none; padding: 0; }
-        .problem-item { 
-            display: grid; grid-template-columns: 2fr 1fr 1fr 50px; align-items: center; 
-            padding: 8px 0; border-bottom: 1px dotted #eee; font-size: 18px; gap: 5px;
-        }
-        .problem-text { font-weight: 500; color: var(--color-text-dark); text-align: left; }
-        .user-answer-display { font-weight: 700; text-align: center; font-size: 16px; }
-        .correct-answer-display { color: var(--color-apple-blue); font-weight: 700; font-size: 14px; text-align: center; }
-        .problem-mark-group { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
-        .btn-hint-review {
-            background-color: var(--color-apple-orange); color: white; border: none; border-radius: 50%;
-            width: 25px; height: 25px; font-size: 14px; line-height: 25px; padding: 0;
-            cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); flex-shrink: 0;
-        }
-        .problem-mark { font-size: 30px; font-weight: 900; font-family: Arial, sans-serif; line-height: 1; flex-shrink: 0; }
-        .mark-wrong { color: #ff3b30; } 
-        .report-actions { display: flex; justify-content: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
-        .report-actions button {
-            padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
-            font-size: 16px; font-weight: 600; transition: background-color 0.2s;
-        }
-        .btn-primary { background-color: var(--color-apple-blue); color: white; }
-        .btn-secondary { background-color: var(--color-apple-orange); color: white; }
-        .btn-download { background-color: var(--color-apple-green); color: white; }
-        .hide-for-capture { display: none; }
-
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header-section">
-            <h1>🥳 刘书语的魔法数学特训营</h1>
-            <p class="tagline">🥇 成为全班数学小冠军！ (一年级方法专项练习)</p>
-            <div class="mode-switch-group">
-                <div class="select-wrapper">
-                    <select id="modeSelect" class="mode-select">
-                        <optgroup label="基础运算模式">
-                            <option value="add">基础加法</option>
-                            <option value="sub">基础减法</option>
-                            <option value="mixed">混合练习</option>
-                            <option value="continuous">🔥 连续运算</option>
-                        </optgroup>
-                        <optgroup label="专项方法练习">
-                            <option value="noCarryAdd">🎯 同位相加法 (不进位)</option>
-                            <option value="noBreakSub">🎯 同位相减法 (不破十)</option>
-                            <option value="couShi">🎯 凑十法</option>
-                            <option value="jieShi" selected>🎯 借十法</option>
-                            <option value="pingShi">🎯 平十法</option>
-                        </optgroup>
-                        <optgroup label="考试与挑战">
-                            <option value="exam">💯 10题快速考试</option>
-                        </optgroup>
-                    </select>
-                </div>
-            </div>
-            <div class="score-board">
-                <div class="score-item">正确: <span id="correctCount">0</span></div>
-                <div class="score-item">错误: <span id="wrongCount">0</span></div>
-                <div class="score-item">总数: <span id="totalCount">0</span></div>
-            </div>
-        </div>
-        <div class="main-calculation-area">
-            <div class="math-problem" id="mathProblemDisplay">
-                <span id="number1"></span><span id="operator1" class="operator"></span>
-                <span id="number2"></span><span id="operator2"></span> 
-                <span id="number3"></span><span id="equalsSign"></span><span id="resultDisplay"></span>
-            </div>
-            <div id="vfxContainer" class="vfx-container"></div>
-            <button id="newProblemButton">🔄 <span class="button-text">换题</span></button>
-            <div class="input-wrapper">
-                <input type="number" id="answerInput" placeholder="请输入答案" inputmode="numeric">
-                <button id="submitButton">提交</button>
-                <button id="hintButton">💡 提示</button>
-            </div>
-        </div>
-        <div id="feedback"></div>
-    </div>
-    
-    <div id="examModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" id="examModalClose">&times;</span>
-            <div id="examModalTitle" class="modal-title"></div>
-            <div id="examReportContent"></div>
-        </div>
-    </div>
-
-    <div id="hintModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" id="hintModalClose">&times;</span>
-            <div id="hintModalTitle" class="modal-title"></div>
-            <div id="hintVisuals"></div> 
-            <div id="hintModalSteps"></div>
-        </div>
-    </div>
-
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <script>
         // --- 变量和状态初始化 ---
@@ -394,10 +22,10 @@
         }
 
         const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] = 
-            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
+            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'operator2', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
         
         const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
-            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe('examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'));
+            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
         
         const examReportContent = getElementByIdSafe('examReportContent'); 
 
@@ -542,7 +170,7 @@
             let animationSteps = []; // 静态版本不使用动画数组
 
             // **1. 求解未知数逻辑 (A op ? = C) **
-            if (currentProblem.unknownPosition === 'n2' && !forcedMode) {
+            if (currentProblem.unknownPosition !== 'res' && !forcedMode) {
                 const n1Known = currentProblem.num1;
                 const n2Answer = currentProblem.answer; 
                 const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer); 
@@ -597,7 +225,8 @@
                     calculationDetails.stepsHTML = tempSteps;
 
                 } 
-
+                
+                // **关键修复：将计算步骤追加到 s**
                 s += calculationDetails.stepsHTML; 
                 t += ` (计算使用：${calculationTitle})`; 
 
@@ -739,12 +368,12 @@
         // --- 模态框和报告逻辑 ---
         function generateHintSteps(problem, problemIndex = null) {
             const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = problem;
-            let s = '', finalFormula = '';
+            
             hintModal.style.display = 'block';
             hintVisuals.innerHTML = ''; // 清空旧图
 
             // --- 🍎 统一画图和动画数组初始化 ---
-            let details;
+            let details = { title: '未找到步骤', stepsHTML: '', formula: '' };
             
             if (num3 !== null && num3 !== undefined) {
                 // 1. 连续运算：画第一步 (静态)
@@ -754,12 +383,13 @@
                 const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null); 
                 const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, null); 
                 
+                // **修复：将步骤合并**
                 details = {
                     title: `连续运算分步解析`,
                     stepsHTML: `
-                        <div class="modal-step step-1" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2} (方法：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
+                        <div class="modal-step step-1" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2} ${opRedSpan('=')} ${numRedSpan(iR)} (方法：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
                         ${firstStepDetails.stepsHTML.replace(/step-\d+/g, 'sub-step')}
-                        <div class="modal-step step-2">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
+                        <div class="modal-step step-2" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} ${opRedSpan('=')} ${numRedSpan(answer)} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>
                         ${secondStepDetails.stepsHTML.replace(/step-\d+/g, 'sub-step')}
                     `,
                     formula: `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`,
@@ -768,12 +398,12 @@
             } else {
                 // 标准或未知数问题 (先画图，再计算步骤)
                 const originalProblem = currentProblem;
-                currentProblem = problem;
+                currentProblem = problem; // 确保 getSingleOpHintSteps 使用正确的 unknownPosition
                 
                 let modeToDraw = specificMode;
                 let drawN1 = num1, drawN2 = num2, drawOp = operator1;
                 
-                if (unknownPosition === 'n2') {
+                if (unknownPosition !== 'res') {
                     // 求解未知数时，画图基于转换后的减法
                     modeToDraw = 'sub';
                     const n1Known = num1;
@@ -789,10 +419,10 @@
                 // **核心步骤计算**
                 details = getSingleOpHintSteps(num1, num2, operator1, specificMode);
                 currentProblem = originalProblem; // 恢复当前问题
-
             }
             
             hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
+            // **关键修复：确保 stepsHTML 和 formula 能够被设置**
             hintModalSteps.innerHTML = details.stepsHTML + details.formula; 
             
             // --- 步骤淡入效果 (静态版本) ---
@@ -867,7 +497,7 @@
                 let problemText = '';
                 if (p.unknownPosition === 'res') {
                     problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
-                } else if (p.unknownPosition === 'n2') {
+                } else if (p.unknownPosition !== 'res') {
                     const knownResult = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer); 
                     problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${knownResult}`;
                 }
@@ -997,7 +627,7 @@
                         if (res > 10 && (n1 % 10) + (n2 % 10) > 9 && res <= maxNum) generatedSuccessfully = true;
                     } else if (generatorMode === 'noCarryAdd') {
                         op1 = '+'; n1 = 10 + Math.floor(Math.random() * 10); const u1_ = n1 % 10;
-                        if (Math.random() < 0.5) { 
+                        if (Math.random() < 0.5) {
                             let maxBUnit = 9 - u1_;
                             if (Math.random() < 0.7) { n2 = 10 + Math.floor(Math.random() * (maxBUnit + 1)); if (n1 + n2 > maxNum) continue; } 
                             else { n2 = 1 + Math.floor(Math.random() * maxBUnit); }
@@ -1052,7 +682,7 @@
                 unknownPosition: unknownPos, specificMode: generatorMode 
             };
             
-            if (unknownPos === 'n2') {
+            if (unknownPos !== 'res') {
                 n1El.textContent = n1; op1El.textContent = op1; n2El.textContent = '?'; equalsSignEl.textContent = '=';
                 resultDisplayEl.textContent = n1 + (op1 === '+' ? currentProblem.answer : -currentProblem.answer);
             } else {
