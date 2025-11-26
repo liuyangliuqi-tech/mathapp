@@ -232,6 +232,17 @@
 
         .formula .op-red { color: var(--color-apple-red); }
         .formula .num-red { color: var(--color-apple-red); }
+        
+        /* **新增：转换公式的特殊样式和过渡（用于顺序展示）** */
+        .formula.conversion-formula {
+            font-size: clamp(16px, 3vw, 20px); 
+            margin-top: 0.5vh; 
+            margin-bottom: 1.5vh; 
+            color: var(--color-apple-orange);
+            background-color: #ffeccf; /* 浅橙色背景 */
+            padding: 1vh;
+        }
+
 
         @keyframes modalopen {
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
@@ -352,7 +363,6 @@
     <div id="hintModal" class="modal">
         <div class="modal-content">
             <span class="modal-close" id="hintModalClose">&times;</span>
-            <div id="hintModalTitle" class="modal-title"></div>
             <div id="hintVisuals"></div> 
             <div id="hintModalSteps"></div>
         </div>
@@ -775,7 +785,7 @@
             
             } catch (error) {
                 console.error("Problem generation error:", error.message || error); 
-                // !!! 修正：将硬编码的回退加法题改为标准的借十法减法题
+                // 修正：将硬编码的回退加法题改为标准的借十法减法题
                 currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode }; 
             }
 
@@ -980,6 +990,10 @@
                 // 步骤 1: 关系转换
                 s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
                 
+                // 【修正】将转换公式直接插入到步骤 1 之后
+                const conversionFormula = `<span class="formula conversion-formula fade-start">${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)} ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}</span>`;
+                s += conversionFormula; 
+
                 // 修正：重新编号计算步骤 (从 步骤 2 开始)
                 let calcStepsHtml = calculationDetails.stepsHTML;
                 let continuousStepNumber = 2; 
@@ -991,12 +1005,11 @@
 
                 t += ` (计算使用：${calculationTitle})`; 
 
-                const conversionFormula = `<span class="formula" style="font-size: clamp(16px, 3vw, 20px); margin-top: 0; margin-bottom: 0.5vh; color: var(--color-apple-orange);">${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)} ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}</span>`;
-                
                 let calculationFormula = calculationDetails.formula; 
                 calculationFormula = calculationFormula.replace(/<span class="formula">/g, '<span class="formula" style="margin-top: 0;">');
 
-                formulaHTML = conversionFormula + calculationFormula; 
+                // 【修正】最终 formulaHTML 只包含计算公式（将被放在最底部）
+                formulaHTML = calculationFormula; 
                 return { title: t, stepsHTML: s, formula: formulaHTML }; 
             }
             
@@ -1056,7 +1069,7 @@
             // --- 结束：核心画图逻辑 ---
 
 
-            // --- 2. 步骤和公式生成 (保持不变) ---
+            // --- 2. 步骤和公式生成 (更新：处理连续运算) ---
             if (num3 !== null && num3 !== undefined) {
                 const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
                 const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null, 'res'); 
@@ -1079,33 +1092,43 @@
                 finalFormula = details.formula;
             }
             
-            // --- 3. 动画逻辑 (更新，实现最终公式淡入) ---
-            // 将最终公式内容包裹在带 'fade-start' 类的 span 中
-            // 注意：需要确保 id="finalFormulaWrapper" 是独一无二的元素，这里把它放在 hintModalSteps 的末尾
+            // --- 3. 动画逻辑 (更新，实现公式分步淡入) ---
+            // 将最终计算公式内容包裹在带 'fade-start' 类的 span 中，并添加到 steps HTML 之后
             hintModalSteps.innerHTML = s + `<span id="finalFormulaWrapper" class="formula fade-start">${finalFormula.replace(/<span class="formula">/g, '').replace(/<\/span>/g, '')}</span>`; 
             
-            const steps = hintModalSteps.querySelectorAll('.modal-step');
-            const formulaWrapper = getElementByIdSafe('finalFormulaWrapper');
+            // 【新选择器】选择所有需要按顺序淡入的元素：modal-step 和 conversion-formula (如果存在)
+            const allItems = Array.from(hintModalSteps.querySelectorAll('.modal-step, .conversion-formula'));
+            const calculationFormulaWrapper = getElementByIdSafe('finalFormulaWrapper');
             
-            // 步骤初始化：全部隐藏
-            steps.forEach(step => step.classList.add('fade-start')); 
+            // 初始化所有 item 的动画状态（公式需要额外设置 opacity 和 transform）
+            allItems.forEach(item => {
+                item.classList.add('fade-start');
+                if (item.classList.contains('formula')) {
+                    item.style.opacity = 0; 
+                    item.style.transform = 'translateY(10px)';
+                }
+            });
             
+            // 动画顺序播放
             let totalDelay = 0;
-            steps.forEach((step, index) => {
-                const delay = 450;
+            const delay = 450;
+            
+            allItems.forEach((item, index) => {
                 totalDelay += delay;
                 setTimeout(() => { 
-                    step.classList.remove('fade-start'); 
-                    step.classList.add('fade-end'); 
+                    item.classList.remove('fade-start'); 
+                    item.classList.add('fade-end');
+                    item.style.opacity = 1; 
+                    item.style.transform = 'translateY(0)'; 
                 }, 100 + index * delay);
             });
             
-            // 步骤动画完成后，淡入最终公式
+            // 最终计算公式淡入
             setTimeout(() => {
-                formulaWrapper.classList.remove('fade-start');
-                formulaWrapper.style.transform = 'translateY(0)';
-            }, 100 + steps.length * 450 + 200); // 额外的 200ms 延迟确保最后一步完成
-
+                calculationFormulaWrapper.classList.remove('fade-start');
+                calculationFormulaWrapper.style.opacity = 1;
+                calculationFormulaWrapper.style.transform = 'translateY(0)';
+            }, 100 + allItems.length * delay + 200); // 额外的 200ms 延迟确保最后一步完成
         }
         
         // --- 模态框和报告逻辑 (保持不变) ---
