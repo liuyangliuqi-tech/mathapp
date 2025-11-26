@@ -368,7 +368,7 @@
         let examCurrentQuestion = 0, examCorrectAnswers = 0; 
         let examProblems = []; 
         let isSubmitting = false; 
-        const MAX_GENERATION_ATTEMPTS = 50; 
+        const MAX_GENERATION_ATTEMPTS = 50; // 增加常量用于生成器循环
         let currentMode = 'jieShi'; 
 
         // --- 元素 ID 查找 ---
@@ -385,7 +385,7 @@
             ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
         
         const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
-            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
+            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe('id'));
         
         const examReportContent = getElementByIdSafe('examReportContent'); 
 
@@ -538,166 +538,188 @@
             return { num1: n1, num2: n2, operator1: op1, num3: n3, operator2: op2, answer: res, unknownPosition: 'res' };
         }
 
-        // CouShi (A + B = C, where A+B > 10, A/B > 5)
+        /**
+         * 修复：使用循环确保生成的题目符合 '凑十法' 核心约束 (进位)
+         * CouShi (A + B = C, where A+B > 10, A/B > 5)
+         */
         function generateCouShi(maxNum, allowUnknown) {
-            let n1 = rand(7, 18); // Big number
-            let need = 10 - (n1 % 10);
-            if (need <= 0 || need > 9) throw new Error('Retry CouShi need');
-            let n2 = need + rand(1, 9 - need); // Small number that forces carry
-            
-            if (n1 + n2 > maxNum || n1 < 6 || n2 < 1) throw new Error('Retry CouShi range');
-            
-            const res = n1 + n2;
-            let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
-            
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain CouShi property ((A%10) + (B%10) > 10)
-                if (Math.random() < 0.5) { // ? + B = C (n1)
-                    let n1_calc = res - n2;
-                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) <= 10) throw new Error('Retry CouShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A + ? = C (n2)
-                    let n2_calc = res - n1;
-                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) <= 10) throw new Error('Retry CouShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            let attempts = 0;
+            while (attempts++ < MAX_GENERATION_ATTEMPTS) {
+                // n1, n2 都必须小于 20，且 n1+n2 > 10
+                let n1 = rand(6, 19); 
+                let uD1 = n1 % 10;
+                
+                // 核心约束 1: 必须进位 (uD1 + n2's unit digit > 9)
+                let minU2 = 10 - uD1;
+                // n2 必须是 1-9 的数，且强制进位
+                if (minU2 > 9 || minU2 < 1) continue; 
+                
+                let n2 = rand(minU2, 9); 
+                
+                const res = n1 + n2;
+                if (res > maxNum || res <= 10) continue; // 确保结果大于 maxNum 且必须进位
+                
+                let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res', specificMode: 'couShi' };
+                
+                if (allowUnknown && Math.random() < 0.4) {
+                    if (Math.random() < 0.5) { // ? + B = C (求解 n1)
+                        // 问题的答案是 n1，但显示时 n1 为 ?
+                        problem.answer = n1; problem.unknownPosition = 'n1';
+                    } else { // A + ? = C (求解 n2)
+                        // 问题的答案是 n2，但显示时 n2 为 ?
+                        problem.answer = n2; problem.unknownPosition = 'n2';
+                    }
                 }
+                return problem;
             }
-            return problem;
+            throw new Error('CouShi 生成器：达到最大重试次数');
         }
 
-        // JieShi (A - B = C, where A <= 20, B > A%10)
+        /**
+         * 修复：使用循环确保生成的题目符合 '借十法' 核心约束 (退位)
+         * 修复：排除 19-10 这种不符合借十法特征的题目
+         * JieShi (A - B = C, where A <= 20, B > A%10, B is single digit)
+         */
         function generateJieShi(maxNum, allowUnknown) {
-            let n1 = rand(11, Math.min(maxNum, 20));
-            let uD = n1 % 10;
-            if (uD === 0) throw new Error('Retry JieShi uD');
-            let n2 = rand(uD + 1, 9); 
-            
-            if (n1 - n2 < 1) throw new Error('Retry JieShi res');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+            let attempts = 0;
+            while (attempts++ < MAX_GENERATION_ATTEMPTS) {
+                // n1 必须是 11-20 之间的数
+                let n1 = rand(11, Math.min(maxNum, 20));
+                let uD = n1 % 10;
+                
+                // 核心约束 1: n1 的个位不能为 0 (排除 10-?, 20-?)，因为这些不典型
+                if (uD === 0) continue; 
+                
+                // 核心约束 2: n2 必须是 1-9 的数，且 n2 > n1 的个位 (uD)，从而强制需要“借十”
+                let n2 = rand(uD + 1, 9);
+                
+                const res = n1 - n2;
+                if (res < 1) continue; // 确保结果大于等于 1
+                
+                // 确保 operator1 永远是减号
+                let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res', specificMode: 'jieShi' };
 
-            if (allowUnknown && Math.random() < 0.4) {
-                 // Unknown must maintain JieShi property (B%10 > A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n1_calc <= 10 || n2 > n1_calc % 10) throw new Error('Retry JieShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry JieShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+                if (allowUnknown && Math.random() < 0.4) {
+                    if (Math.random() < 0.5) { // ? - B = C (求解 n1)
+                        // 问题的答案是 n1，但显示时 n1 为 ?
+                        problem.answer = n1; problem.unknownPosition = 'n1';
+                    } else { // A - ? = C (求解 n2)
+                        // 问题的答案是 n2，但显示时 n2 为 ?
+                        problem.answer = n2; problem.unknownPosition = 'n2';
+                    }
                 }
+                return problem;
             }
-            return problem;
+            throw new Error('JieShi 生成器：达到最大重试次数');
         }
 
         // PingShi (A - B = C, where A > 20, B > A%10) - Similar to JieShi but larger A
         function generatePingShi(maxNum, allowUnknown) {
-            let n1 = rand(21, Math.min(maxNum, 30));
-            let uD = n1 % 10;
-            if (uD === 0) throw new Error('Retry PingShi uD');
-            let n2 = rand(uD + 1, 9); 
-            
-            if (n1 - n2 < 1) throw new Error('Retry PingShi res');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+            let attempts = 0;
+            while (attempts++ < MAX_GENERATION_ATTEMPTS) {
+                let n1 = rand(21, Math.min(maxNum, 30));
+                let uD = n1 % 10;
+                if (uD === 0) continue;
+                
+                let n2 = rand(uD + 1, 9); 
+                
+                const res = n1 - n2;
+                if (res < 1) continue; 
+                
+                let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res', specificMode: 'pingShi' };
 
-            if (allowUnknown && Math.random() < 0.4) {
-                 // Unknown must maintain PingShi property (B%10 > A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n1_calc <= 20 || n2 > n1_calc % 10) throw new Error('Retry PingShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry PingShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+                if (allowUnknown && Math.random() < 0.4) {
+                    if (Math.random() < 0.5) { // ? - B = C (求解 n1)
+                        problem.answer = n1; problem.unknownPosition = 'n1';
+                    } else { // A - ? = C (求解 n2)
+                        problem.answer = n2; problem.unknownPosition = 'n2';
+                    }
                 }
+                return problem;
             }
-            return problem;
+            throw new Error('PingShi 生成器：达到最大重试次数');
         }
 
         // NoBreakSub (A - B = C, where A > 10, B%10 <= A%10)
         function generateNoBreakSub(maxNum, allowUnknown) {
-            let n1 = rand(11, maxNum);
-            let u1_ = n1 % 10;
-            
-            let maxN2Unit = u1_;
-            let n2Unit = rand(0, maxN2Unit);
-            
-            let n2Ten = rand(0, Math.floor(n1 / 10) - 1);
-            let n2 = n2Ten * 10 + n2Unit;
+            let attempts = 0;
+            while (attempts++ < MAX_GENERATION_ATTEMPTS) {
+                let n1 = rand(11, maxNum);
+                let u1_ = n1 % 10;
+                
+                let maxN2Unit = u1_;
+                let n2Unit = rand(0, maxN2Unit);
+                
+                let n2Ten = rand(0, Math.floor(n1 / 10) - 1);
+                let n2 = n2Ten * 10 + n2Unit;
 
-            if (n2 < 1 || n2 >= n1) throw new Error('Retry NoBreakSub size');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+                if (n2 < 1 || n2 >= n1) continue; 
+                
+                const res = n1 - n2;
+                let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res', specificMode: 'noBreakSub' };
 
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain NoBreakSub property (B%10 <= A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n2 % 10 > n1_calc % 10) throw new Error('Retry NoBreakSub n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 > n1 % 10) throw new Error('Retry NoBreakSub n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+                if (allowUnknown && Math.random() < 0.4) {
+                    if (Math.random() < 0.5) { // ? - B = C (求解 n1)
+                        let n1_calc = res + n2;
+                        if (n1_calc > maxNum || n2 % 10 > n1_calc % 10) continue;
+                        problem.answer = n1_calc; problem.unknownPosition = 'n1';
+                    } else { // A - ? = C (求解 n2)
+                        let n2_calc = n1 - res;
+                        if (n2_calc < 1 || n2_calc % 10 > n1 % 10) continue;
+                        problem.answer = n2_calc; problem.unknownPosition = 'n2';
+                    }
                 }
+                return problem;
             }
-            return problem;
+            throw new Error('NoBreakSub 生成器：达到最大重试次数');
         }
 
         // NoCarryAdd (A + B = C, where A%10 + B%10 <= 9)
         function generateNoCarryAdd(maxNum, allowUnknown) {
-            let n1 = rand(10, maxNum - 10);
-            let u1_ = n1 % 10;
-            
-            let maxN2Unit = 9 - u1_;
-            let n2Unit = rand(0, maxN2Unit);
-            
-            let maxN2Ten = Math.floor((maxNum - n1) / 10);
-            let n2Ten = rand(0, maxN2Ten) * 10;
-            
-            let n2 = n2Ten + n2Unit;
-            if (n2 < 1) n2 = 1; 
-            if (n1 + n2 > maxNum) throw new Error('Retry NoCarryAdd range');
-            
-            const res = n1 + n2;
-            let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
+            let attempts = 0;
+            while (attempts++ < MAX_GENERATION_ATTEMPTS) {
+                let n1 = rand(10, maxNum - 10);
+                let u1_ = n1 % 10;
+                
+                let maxN2Unit = 9 - u1_;
+                let n2Unit = rand(0, maxN2Unit);
+                
+                let maxN2Ten = Math.floor((maxNum - n1) / 10);
+                let n2Ten = rand(0, maxN2Ten) * 10;
+                
+                let n2 = n2Ten + n2Unit;
+                if (n2 < 1) n2 = 1; 
+                if (n1 + n2 > maxNum) continue; 
+                
+                const res = n1 + n2;
+                let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res', specificMode: 'noCarryAdd' };
 
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain NoCarryAdd property (A%10 + B%10 <= 9)
-                if (Math.random() < 0.5) { // ? + B = C (n1)
-                    let n1_calc = res - n2;
-                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) > 9) throw new Error('Retry NoCarryAdd n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A + ? = C (n2)
-                    let n2_calc = res - n1;
-                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) > 9) throw new Error('Retry NoCarryAdd n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+                if (allowUnknown && Math.random() < 0.4) {
+                    if (Math.random() < 0.5) { // ? + B = C (求解 n1)
+                        let n1_calc = res - n2;
+                        if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) > 9) continue;
+                        problem.answer = n1_calc; problem.unknownPosition = 'n1';
+                    } else { // A + ? = C (求解 n2)
+                        let n2_calc = res - n1;
+                        if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) > 9) continue;
+                        problem.answer = n2_calc; problem.unknownPosition = 'n2';
+                    }
                 }
+                return problem;
             }
-            return problem;
+            throw new Error('NoCarryAdd 生成器：达到最大重试次数');
         }
         
         // Mixed mode: picks a sub-generator
         function generateMixed(maxNum, allowUnknown) {
             const subModes = ['couShi', 'jieShi', 'noBreakSub', 'noCarryAdd', 'basicAdd', 'basicSub'];
-            let mode;
             let problem;
             
             for (let i = 0; i < 10; i++) {
                  try {
-                     mode = modeRandom(subModes);
-                     if (mode === 'basicAdd') problem = generateBasicAdd(maxNum, allowUnknown);
-                     else if (mode === 'basicSub') problem = generateBasicSub(maxNum, allowUnknown);
-                     else if (mode === 'couShi') problem = generateCouShi(maxNum, allowUnknown);
-                     else if (mode === 'jieShi') problem = generateJieShi(maxNum, allowUnknown);
-                     else if (mode === 'noBreakSub') problem = generateNoBreakSub(maxNum, allowUnknown);
-                     else if (mode === 'noCarryAdd') problem = generateNoCarryAdd(maxNum, allowUnknown);
+                     const mode = modeRandom(subModes);
+                     const generatorFn = getGenerator(mode);
+                     problem = generatorFn(maxNum, allowUnknown);
                      problem.specificMode = mode;
                      return problem;
                  } catch (e) {
@@ -752,6 +774,7 @@
                     if (currentProblem.num1 !== null && currentProblem.num2 !== null && currentProblem.answer !== null && currentProblem.answer >= 0 && (currentProblem.num3 === null || currentProblem.answer <= maxNum)) {
                          generatedSuccessfully = true;
                     } else {
+                         // Should be caught by generator's internal loop, but here for safety
                          throw new Error('Problem properties invalid or out of range');
                     }
                 } 
@@ -934,7 +957,10 @@
                          subN1 = knownResult; subN2 = n1Known; conversionOp = '+';
                          t = '🧮 求解未知被减数 (? = C + B)';
                          conversionText = `：🔍 未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
-                         calculationDetails = getNoCarryAddSteps(subN1, subN2, n2Answer); 
+                         // 转换后的加法计算，使用凑十法或不进位加法
+                         const u1 = subN1 % 10, u2 = subN2 % 10;
+                         if (u1 + u2 > 9) { calculationDetails = getCouShiSteps(subN1, subN2, n2Answer); }
+                         else { calculationDetails = getNoCarryAddSteps(subN1, subN2, n2Answer); }
 
                     } else { // unknownPos === 'n2', A - ? = C -> ? = A - C
                          subN1 = n1; subN2 = knownResult; 
@@ -985,11 +1011,10 @@
             // --- 2. 标准运算逻辑 (A op B = ?) ---
             if (op === '+') {
                 const u1 = n1 % 10, u2 = n2 % 10;
-                const isCouShi = u1 + u2 > 10;
-                const isNoCarryAdd = u1 + u2 <= 9;
+                const isCouShi = u1 + u2 > 9; // 修正为 > 9
                 
                 if (effectiveMode === 'couShi' && isCouShi) return getCouShiSteps(n1, n2, res);
-                if (effectiveMode === 'noCarryAdd' && isNoCarryAdd) return getNoCarryAddSteps(n1, n2, res);
+                if (effectiveMode === 'noCarryAdd' && !isCouShi) return getNoCarryAddSteps(n1, n2, res);
                 if (isCouShi) return getCouShiSteps(n1, n2, res);
                 return getNoCarryAddSteps(n1, n2, res); 
                 
@@ -1139,10 +1164,20 @@
                     problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
                 } else {
                     resultC = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer); 
-                    if (p.unknownPosition === 'n1') {
-                         problemText = `${index + 1}. ? ${p.operator1} ${p.num2} = ${resultC}`;
-                    } else if (p.unknownPosition === 'n2') {
-                         problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${resultC}`;
+                    if (p.operator1 === '-' && p.unknownPosition === 'n1') {
+                         resultC = p.answer + p.num2;
+                         problemText = `${index + 1}. ? ${p.operator1} ${p.num2} = ${p.num1}`;
+                    } else if (p.operator1 === '-' && p.unknownPosition === 'n2') {
+                         resultC = p.num1 - p.answer;
+                         problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${p.num2}`;
+                    } else if (p.operator1 === '+' && p.unknownPosition === 'n1') {
+                         resultC = p.answer + p.num2;
+                         problemText = `${index + 1}. ? ${p.operator1} ${p.num2} = ${p.num1}`;
+                    } else if (p.operator1 === '+' && p.unknownPosition === 'n2') {
+                         resultC = p.num1 + p.answer;
+                         problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${p.num2}`;
+                    } else {
+                         problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2} = ?`;
                     }
                 }
                 const isCorrect = p.userAnswer === p.answer; 
