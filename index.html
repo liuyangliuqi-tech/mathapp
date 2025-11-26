@@ -1292,7 +1292,8 @@
             if (isExamMode) {
                 const isC = uA === eA;
                 if (isC) examCorrectAnswers++;
-                examProblems.push(problemSnapshot); 
+                // 【已修复 BUG】不再使用 push() 导致数组内容翻倍，而是替换当前索引位置的对象
+                examProblems[examCurrentQuestion] = problemSnapshot; 
                 examCurrentQuestion++;
                 setTimeout(() => { 
                     if (examCurrentQuestion < EXAM_TOTAL_QUESTIONS) { generateProblem(true); isSubmitting = false; submitBtn.disabled = false; } 
