@@ -372,14 +372,24 @@
 
     <script>
         // --- 变量和状态初始化 ---
+        // **修正 1: 将 maxNum 设置为 20**
         let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [], unknownPosition: 'res', specificMode: null }; 
-        let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 30; 
+        let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 20; 
         let isExamMode = false; const EXAM_TOTAL_QUESTIONS = 10;
         let examCurrentQuestion = 0, examCorrectAnswers = 0; 
         let examProblems = []; 
         let isSubmitting = false; 
         const MAX_GENERATION_ATTEMPTS = 50; 
         let currentMode = 'jieShi'; 
+
+        // 考试模式下的题型分布 (5个类型，每个2题)
+        const EXAM_MODES_DISTRIBUTION = [
+            'couShi', 'couShi', 
+            'jieShi', 'jieShi', 
+            'noCarryAdd', 'noCarryAdd', 
+            'noBreakSub', 'noBreakSub', 
+            'continuous', 'continuous'
+        ];
 
         // --- 元素 ID 查找 ---
         function getElementByIdSafe(id) {
@@ -394,7 +404,6 @@
         const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] = 
             ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
         
-        // **修正了这里的map函数调用：确保每个元素都获取到正确的ID**
         const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
             ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
         
@@ -430,7 +439,8 @@
         // --- 可视化画图函数 (保持不变) ---
         function renderVisualHelpers(container, n1, n2, op) {
             container.innerHTML = ''; 
-            if (n1 > 30) {
+            // **更新: 将最大画图数字从 30 更改为 20**
+            if (n1 > 20) {
                  const msg = document.createElement('div');
                  msg.className = 'visual-legend';
                  msg.textContent = `(数字较大，此处不绘制详细苹果图)`;
@@ -473,13 +483,66 @@
             container.appendChild(wrapper);
         }
 
+        // **新增: 考试问题预生成函数**
+        function generateExamProblems() {
+            examProblems = [];
+            const maxAttemptsPerProblem = 10;
+            const generatorMap = {
+                'couShi': generateCouShi,
+                'jieShi': generateJieShi,
+                'noCarryAdd': generateNoCarryAdd,
+                'noBreakSub': generateNoBreakSub,
+                'continuous': generateContinuous,
+                'mixed': generateMixed // Fallback
+            };
+            
+            // 随机打乱题型顺序，确保考试顺序随机
+            const shuffledModes = [...EXAM_MODES_DISTRIBUTION].sort(() => Math.random() - 0.5);
 
+            for (let i = 0; i < EXAM_TOTAL_QUESTIONS; i++) {
+                let mode = shuffledModes[i];
+                let problem = null;
+                let attempts = 0;
+                let generatedSuccessfully = false;
+                
+                // 考试模式下，随机分配未知数 (?) 的位置 (20% 概率)
+                const allowUnknown = (Math.random() < 0.25) && (mode !== 'continuous');
+                
+                while (!generatedSuccessfully && attempts < maxAttemptsPerProblem) {
+                    attempts++;
+                    try {
+                        const generatorFn = generatorMap[mode];
+                        problem = generatorFn(maxNum, allowUnknown);
+                        // 确保答案和数字在 maxNum 范围内
+                        if (problem.answer >= 0 && problem.answer <= maxNum && 
+                            (problem.num3 === null || (problem.num3 !== null && problem.answer <= maxNum)) ) {
+                            generatedSuccessfully = true;
+                            problem.specificMode = mode;
+                        } else {
+                            throw new Error('Generated problem failed range check');
+                        }
+                    } catch (e) {
+                        problem = null;
+                    }
+                }
+                
+                // 如果特定题型生成失败，退回到混合简单题
+                if (!generatedSuccessfully) {
+                    problem = generateMixed(maxNum, false); 
+                    problem.specificMode = 'mixed-fallback';
+                }
+                
+                examProblems.push(problem);
+            }
+        }
+        
         function switchMode(newMode) {
             currentMode = newMode; 
             isExamMode = newMode === 'exam';
             
             if (isExamMode) {
-                examCurrentQuestion = 0; examCorrectAnswers = 0; examProblems = []; 
+                examCurrentQuestion = 0; examCorrectAnswers = 0; 
+                generateExamProblems(); // **NEW: 预生成考试题目**
                 correctCount = 0; wrongCount = 0;
             } else if (modeSelect.value === 'exam') {
                 correctCount = 0; wrongCount = 0; totalCount = 0;
@@ -514,7 +577,7 @@
         
         // Basic Add (A + B = C)
         function generateBasicAdd(maxNum, allowUnknown) {
-            let n1 = rand(1, maxNum);
+            let n1 = rand(1, Math.min(maxNum - 1, 15));
             let n2 = rand(1, maxNum - n1);
             if (!allowUnknown) return { num1: n1, num2: n2, operator1: '+', answer: n1 + n2, unknownPosition: 'res' };
             return getUnknownProps(n1, n2, '+', maxNum, allowUnknown);
@@ -531,7 +594,7 @@
         // Continuous Operation (A op B op C = D)
         function generateContinuous(maxNum) {
             const op1 = modeRandom(['+', '-']); 
-            const n1 = rand(10, maxNum - 10);
+            const n1 = rand(10, maxNum - 5);
             const n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
             if (n2Range < 1) throw new Error('Retry continuous');
             const n2 = rand(1, n2Range);
@@ -551,7 +614,7 @@
 
         // CouShi (A + B = C, where A+B > 10, A/B > 5)
         function generateCouShi(maxNum, allowUnknown) {
-            let n1 = rand(7, 18); // Big number
+            let n1 = rand(7, Math.min(maxNum, 18)); // Big number
             let need = 10 - (n1 % 10);
             if (need <= 0 || need > 9) throw new Error('Retry CouShi need');
             let n2 = need + rand(1, 9 - need); // Small number that forces carry
@@ -562,14 +625,14 @@
             let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
             
             if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain CouShi property ((A%10) + (B%10) > 10)
+                // Unknown must maintain CouShi property ((A%10) + (B%10) > 9)
                 if (Math.random() < 0.5) { // ? + B = C (n1)
                     let n1_calc = res - n2;
-                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) <= 10) throw new Error('Retry CouShi n1 calc');
+                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) <= 9) throw new Error('Retry CouShi n1 calc');
                     problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
                 } else { // A + ? = C (n2)
                     let n2_calc = res - n1;
-                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) <= 10) throw new Error('Retry CouShi n2 calc');
+                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) <= 9) throw new Error('Retry CouShi n2 calc');
                     problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
                 }
             }
@@ -579,10 +642,10 @@
         // JieShi (A - B = C, where A <= 20, B > A%10)
         function generateJieShi(maxNum, allowUnknown) {
             let n1;
-            // 修正: 排除 10, 20 (不破十) 和 19 (n2 无法 > 9) 确保必须使用借十法
+            // 修正: 排除 10, 20 (不破十) 确保必须使用借十法
             do {
-                n1 = rand(11, Math.min(maxNum, 20));
-            } while (n1 % 10 === 0 || n1 % 10 === 9); 
+                n1 = rand(11, Math.min(maxNum, 20)); // Max num is 20
+            } while (n1 % 10 === 0); 
             
             let uD = n1 % 10;
             if (uD === 0) throw new Error('Retry JieShi uD');
@@ -610,36 +673,13 @@
             return problem;
         }
 
-        // PingShi (A - B = C, where A > 20, B > A%10) - Similar to JieShi but larger A
+        // PingShi (A - B = C, where A > 20, B > A%10) - Since maxNum=20, this mode is currently disabled in practice.
         function generatePingShi(maxNum, allowUnknown) {
-            let n1;
-            // 排除 20, 30 (不破十) 和 29 (n2 无法 > 9)
+            // Keep original logic, but it will fail generation when maxNum=20 as rand(21, 20) is invalid.
              do {
                 n1 = rand(21, Math.min(maxNum, 30));
             } while (n1 % 10 === 0 || n1 % 10 === 9); 
-            
-            let uD = n1 % 10;
-            if (uD === 0) throw new Error('Retry PingShi uD');
-            let n2 = rand(uD + 1, 9); 
-            
-            if (n1 - n2 < 1) throw new Error('Retry PingShi res');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
-
-            if (allowUnknown && Math.random() < 0.4) {
-                 // Unknown must maintain PingShi property (B%10 > A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n1_calc <= 20 || n2 > n1_calc % 10) throw new Error('Retry PingShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry PingShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
-                }
-            }
-            return problem;
+            throw new Error('PingShi disabled for maxNum <= 20');
         }
 
         // NoBreakSub (A - B = C, where A > 10, B%10 <= A%10)
@@ -675,7 +715,7 @@
 
         // NoCarryAdd (A + B = C, where A%10 + B%10 <= 9)
         function generateNoCarryAdd(maxNum, allowUnknown) {
-            let n1 = rand(10, maxNum - 10);
+            let n1 = rand(10, Math.min(maxNum - 1, 15)); // Keep n1 reasonable for smaller maxNum
             let u1_ = n1 % 10;
             
             let maxN2Unit = 9 - u1_;
@@ -721,8 +761,14 @@
                      else if (mode === 'jieShi') problem = generateJieShi(maxNum, allowUnknown);
                      else if (mode === 'noBreakSub') problem = generateNoBreakSub(maxNum, allowUnknown);
                      else if (mode === 'noCarryAdd') problem = generateNoCarryAdd(maxNum, allowUnknown);
-                     problem.specificMode = mode;
-                     return problem;
+                     
+                     // Final validation
+                     if (problem && problem.answer >= 0 && problem.answer <= maxNum && (problem.num3 === null || problem.answer <= maxNum)) {
+                         problem.specificMode = mode;
+                         return problem;
+                     } else {
+                         throw new Error('Mixed problem failed range check');
+                     }
                  } catch (e) {
                      // Ignore and try again
                  }
@@ -753,41 +799,50 @@
             };
             clearDisplay();
 
-            if (isExamMode) submitBtn.disabled = false;
-            
-            // Check if we allow 'n1' or 'n2' unknown positions for this mode
-            const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
-            let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
-            const generatorFn = getGenerator(generatorMode);
-            
-            try {
-                while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
-                    attempts++; 
-                    currentProblem = generatorFn(maxNum, allowUnknown);
-                    currentProblem.specificMode = generatorMode;
-                    
-                    if (currentProblem.num3 !== null && currentProblem.num3 !== undefined) {
-                         mathProbDispEl.classList.add('three-op');
-                    } else {
-                         mathProbDispEl.classList.remove('three-op');
-                    }
-                    
-                    if (currentProblem.num1 !== null && currentProblem.num2 !== null && currentProblem.answer !== null && currentProblem.answer >= 0 && (currentProblem.num3 === null || currentProblem.answer <= maxNum)) {
-                         generatedSuccessfully = true;
-                    } else {
-                         throw new Error('Problem properties invalid or out of range');
-                    }
-                } 
+            if (isExamMode) {
+                // **更新: 考试模式直接从预生成列表获取问题**
+                if (examCurrentQuestion >= EXAM_TOTAL_QUESTIONS) return;
+                currentProblem = examProblems[examCurrentQuestion];
+                generatedSuccessfully = true;
+                submitBtn.disabled = false;
+                hintBtn.disabled = true; // 考试禁用提示
+                newProbBtn.disabled = true; // 考试禁用换题
+            } else {
+                // 标准练习模式的生成逻辑 (保持不变)
+                if (isExamMode) submitBtn.disabled = false;
+                
+                const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
+                let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
+                const generatorFn = getGenerator(generatorMode);
+                
+                try {
+                    while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
+                        attempts++; 
+                        currentProblem = generatorFn(maxNum, allowUnknown);
+                        currentProblem.specificMode = generatorMode;
+                        
+                        if (currentProblem.num3 !== null && currentProblem.num3 !== undefined) {
+                             mathProbDispEl.classList.add('three-op');
+                        } else {
+                             mathProbDispEl.classList.remove('three-op');
+                        }
+                        
+                        if (currentProblem.num1 !== null && currentProblem.num2 !== null && currentProblem.answer !== null && currentProblem.answer >= 0 && (currentProblem.num3 === null || currentProblem.answer <= maxNum)) {
+                             generatedSuccessfully = true;
+                        } else {
+                             throw new Error('Problem properties invalid or out of range');
+                        }
+                    } 
 
-                if (!generatedSuccessfully) { 
-                    throw new Error('Max attempts reached'); 
+                    if (!generatedSuccessfully) { 
+                        throw new Error('Max attempts reached'); 
+                    }
+                
+                } catch (error) {
+                    currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode }; 
                 }
-            
-            } catch (error) {
-                console.error("Problem generation error:", error.message || error); 
-                // 修正：将硬编码的回退加法题改为标准的借十法减法题
-                currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode }; 
             }
+
 
             const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = currentProblem;
             
@@ -818,11 +873,11 @@
             resultDisplayEl.textContent = result_display;
 
             ansInput.value = ''; if (shouldFocus) ansInput.focus();
-            if (isExamMode) { feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`; } 
+            if (isExamMode) { feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题 (题型: ${currentProblem.specificMode || '混合'})`; } 
             else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) { feedbackEl.textContent = ''; }
         }
         
-        // --- 提示步骤逻辑 (A4 Implementation) ---
+        // --- 提示步骤逻辑 (保持不变) ---
 
         // 基础计算步骤
         function getBasicSteps(n1, n2, op, res, titleOverride = '基础加减法') {
@@ -931,6 +986,7 @@
 
             if (isSimpleSub) return { mode: 'basic', func: (a, b, r) => getBasicSteps(a, b, '-', r, '基础减法') };
             if (isNoBreakSub) return { mode: 'noBreakSub', func: getNoBreakSubSteps };
+            // 由于 maxNum=20, 这里只可能是 JieShi
             if (isBreakTen && n1 <= 20) return { mode: 'jieShi', func: getJieShiSteps }; 
             if (isBreakTen) return { mode: 'pingShi', func: getPingShiSteps }; 
             
@@ -1016,7 +1072,7 @@
             // --- 2. 标准运算逻辑 (A op B = ?) ---
             if (op === '+') {
                 const u1 = n1 % 10, u2 = n2 % 10;
-                const isCouShi = u1 + u2 > 9; // 5+5=10 也算凑十
+                const isCouShi = u1 + u2 > 9; 
                 
                 if (effectiveMode === 'couShi' && isCouShi) return getCouShiSteps(n1, n2, res);
                 if (effectiveMode === 'noCarryAdd' && !isCouShi) return getNoCarryAddSteps(n1, n2, res);
@@ -1175,8 +1231,10 @@
                 let problemText = '';
                 let resultC;
 
-                if (p.unknownPosition === 'res') {
-                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}` + (p.num3 !== null && p.num3 !== undefined ? ` ${p.operator2} ${p.num3}` : '');
+                if (p.num3 !== null && p.num3 !== undefined) {
+                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2} ${p.operator2} ${p.num3}`;
+                } else if (p.unknownPosition === 'res') {
+                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}`;
                 } else {
                     resultC = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer); 
                     if (p.unknownPosition === 'n1') {
