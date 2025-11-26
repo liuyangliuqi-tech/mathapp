@@ -354,8 +354,8 @@
                             <option value="continuous">🔥 连续运算</option>
                         </optgroup>
                         <optgroup label="专项方法练习">
-                            <option value="noBreakSub">🎯 同位相减法</option>
-                            <option value="noCarryAdd">🎯 同位相加法</option>
+                            <option value="noCarryAdd">🎯 同位相加法 (不进位)</option>
+                            <option value="noBreakSub">🎯 同位相减法 (不破十)</option>
                             <option value="couShi">🎯 凑十法</option>
                             <option value="jieShi" selected>🎯 借十法</option>
                             <option value="pingShi">🎯 平十法</option>
@@ -959,7 +959,7 @@
             }
         }
         
-        // **主要问题生成函数 (添加了调试保障)**
+        // **主要问题生成函数 (添加了调试保障和专项修正)**
         function generateProblem(shouldFocus = false) { 
             let n1, n2, op1, n3 = null, op2 = null, res = null;
             let unknownPos = 'res'; 
@@ -979,27 +979,124 @@
             if (isExamMode) submitBtn.disabled = false;
             
             try {
-                // **2. 尝试生成题目 (原逻辑)**
+                // **2. 尝试生成题目 (优化后的逻辑)**
                 while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
                     attempts++;
                     n3 = null; op2 = null; res = null;
                     unknownPos = 'res';
                     
-                    if (generatorMode === 'sub') {
+                    if (generatorMode === 'noCarryAdd') { 
+                        // **修正后的同位相加法 (不进位) 生成逻辑**
+                        op1 = '+'; 
+                        
+                        // 生成 n1 (至少两位数或个位数)
+                        n1 = 10 + Math.floor(Math.random() * 20); // 范围: 10-29
+                        let u1 = n1 % 10;
+                        
+                        // 确保 n2 的个位 u2 使得 u1 + u2 <= 9
+                        let max_u2 = 9 - u1;
+                        if (max_u2 < 0) { // 重新生成 n1，因为 n1 个位太大了 (u1>9) (不应该发生)
+                            n1 = 10 + Math.floor(Math.random() * 20); 
+                            u1 = n1 % 10;
+                            max_u2 = 9 - u1;
+                        }
+                        
+                        // 生成 n2 的个位 (u2)
+                        let u2 = Math.floor(Math.random() * (max_u2 + 1));
+                        
+                        // 生成 n2 的十位 (t2)
+                        let max_t2 = Math.floor((maxNum - n1) / 10);
+                        let t2 = Math.floor(Math.random() * (max_t2 + 1));
+                        
+                        // 组合 n2
+                        n2 = t2 * 10 + u2;
+
+                        if (n2 === 0) continue; // 排除 +0 的情况
+
+                        res = n1 + n2;
+
+                        if (res <= maxNum && (n1 % 10) + (n2 % 10) <= 9) {
+                             generatedSuccessfully = true;
+                        }
+                        
+                        // 偶尔生成未知数在中间的题 (A + ? = C)
+                        if (generatedSuccessfully && Math.random() < 0.2) {
+                            // 保持 n1 和 C (res) 不进位的关系
+                            let originalN2 = n2;
+                            n2 = res; // 暂时用 res 存储 C
+                            res = originalN2; // 答案是原 n2
+                            unknownPos = 'n2';
+                        }
+                        
+                    } else if (generatorMode === 'noBreakSub') {
+                        // **修正后的同位相减法 (不破十) 生成逻辑**
                         op1 = '-';
-                        if (Math.random() < 0.4) {
-                             n1 = 10 + Math.floor(Math.random() * 11); 
-                             res = 1 + Math.floor(Math.random() * (n1 - 1)); 
-                             n2 = n1 - res; 
-                             if (n2 > 0 && n2 <= 19) { unknownPos = 'n2'; generatedSuccessfully = true; }
-                        } else {
-                             n1 = 10 + Math.floor(Math.random() * 11); 
-                             n2 = Math.floor(Math.random() * n1); 
-                             res = n1 - n2; 
-                             if (res >= 0) generatedSuccessfully = true;
+                        
+                        // 生成 n1 (被减数) (至少两位数)
+                        n1 = 10 + Math.floor(Math.random() * 20); // 范围: 10-29
+                        let u1 = n1 % 10;
+                        
+                        // 确保 n2 (减数) 的个位 u2 使得 u2 <= u1 (不破十)
+                        let max_u2 = u1;
+                        
+                        // 生成 n2 的个位 (u2)
+                        let u2 = Math.floor(Math.random() * (max_u2 + 1));
+                        
+                        // 生成 n2 的十位 (t2)
+                        let max_t2 = Math.floor(n1 / 10);
+                        let t2 = Math.floor(Math.random() * (max_t2 + 1));
+                        
+                        // 组合 n2
+                        n2 = t2 * 10 + u2;
+                        
+                        if (n2 === 0 || n2 >= n1) continue; // 排除 -0 或减数大于等于被减数
+                        
+                        res = n1 - n2;
+                        
+                        if (res >= 0 && (n1 % 10) >= (n2 % 10)) {
+                             generatedSuccessfully = true;
                         }
 
+                        // 偶尔生成未知数在中间的题 (A - ? = C)
+                        if (generatedSuccessfully && Math.random() < 0.2) {
+                            // 保持 n1 和 C (res) 不破十的关系
+                            let originalN2 = n2;
+                            n2 = res; // 暂时用 res 存储 C
+                            res = originalN2; // 答案是原 n2
+                            unknownPos = 'n2';
+                        }
+                        
+                    } else if (generatorMode === 'couShi') {
+                        op1 = '+'; 
+                        n1 = 7 + Math.floor(Math.random() * 10); 
+                        let need = 10 - (n1 % 10);
+                        n2 = need + 1 + Math.floor(Math.random() * (9 - need)); 
+                        if (n1 + n2 > maxNum) continue; 
+                        res = n1 + n2;
+                        if (res > 10 && (n1 % 10) + (n2 % 10) > 10 && res <= maxNum) generatedSuccessfully = true;
+
+                    } else if (generatorMode === 'jieShi' || generatorMode === 'pingShi') {
+                        op1 = '-'; 
+                        n1 = 11 + Math.floor(Math.random() * 9); 
+                        let uD = n1 % 10; 
+                        
+                        // 确保是破十题: 减数的个位 > 被减数的个位
+                        n2 = uD + 1 + Math.floor(Math.random() * (9 - uD)); 
+                        if (n2 >= n1) n2 = n1 - 1; 
+                        res = n1 - n2;
+                        unknownPos = 'res';
+                        const isBreakTenCheck = n1 > 10 && n2 % 10 > uD;
+                        if (isBreakTenCheck && res >= 0) generatedSuccessfully = true;
+                    
+                    } else if (generatorMode === 'sub') {
+                        op1 = '-';
+                        n1 = 10 + Math.floor(Math.random() * 11); 
+                        n2 = Math.floor(Math.random() * n1); 
+                        res = n1 - n2; 
+                        if (res >= 0) generatedSuccessfully = true;
+
                     } else if (generatorMode === 'mixed') {
+                        // 混合模式直接走基础运算的逻辑
                         const type = Math.floor(Math.random() * 4);
 
                         if (type === 0) { // A + B = ?
@@ -1009,20 +1106,17 @@
                             op1 = '-'; n1 = 10 + Math.floor(Math.random() * 11); n2 = Math.floor(Math.random() * n1); res = n1 - n2;
                             unknownPos = 'res'; generatedSuccessfully = true;
                         } else if (type === 2) { // A + ? = C (未知加数)
-                            op1 = '+'; 
-                            n1 = 5 + Math.floor(Math.random() * 10); 
+                            op1 = '+'; n1 = 5 + Math.floor(Math.random() * 10); 
                             let maxN2 = maxNum - n1;
                             if (maxN2 < 1) continue; 
                             n2 = 1 + Math.floor(Math.random() * maxN2); 
                             res = n1 + n2; 
-                            if (n2 > 0 && res <= maxNum) { unknownPos = 'n2'; generatedSuccessfully = true; }
+                            if (n2 > 0 && res <= maxNum) { n2 = n2; res = res; unknownPos = 'n2'; generatedSuccessfully = true; } // 答案是原 n2
                         } else if (type === 3) { // A - ? = C (未知减数)
-                             op1 = '-'; 
-                             n1 = 10 + Math.floor(Math.random() * 11); res = 1 + Math.floor(Math.random() * (n1 - 1));
+                             op1 = '-'; n1 = 10 + Math.floor(Math.random() * 11); res = 1 + Math.floor(Math.random() * (n1 - 1));
                              n2 = n1 - res; 
-                             if (n2 > 0 && n2 <= 19) { unknownPos = 'n2'; generatedSuccessfully = true; }
+                             if (n2 > 0 && n2 <= 19) { n2 = n2; res = res; unknownPos = 'n2'; generatedSuccessfully = true; } // 答案是原 n2
                         }
-
                     } else if (generatorMode === 'continuous') {
                         op1 = Math.random() < 0.5 ? '+' : '-'; n1 = 10 + Math.floor(Math.random() * 10);
                         let n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
@@ -1039,119 +1133,6 @@
                             mathProbDispEl.classList.add('three-op'); 
                             generatedSuccessfully = true;
                         }
-
-                    } else if (generatorMode === 'couShi') {
-                        op1 = '+'; 
-                        n1 = 7 + Math.floor(Math.random() * 10); 
-                        let need = 10 - (n1 % 10);
-                        n2 = need + 1 + Math.floor(Math.random() * (9 - need)); 
-                        if (n1 + n2 > maxNum) continue; 
-                        res = n1 + n2;
-                        if (res > 10 && (n1 % 10) + (n2 % 10) > 10 && res <= maxNum) generatedSuccessfully = true;
-
-                    } else if (generatorMode === 'noCarryAdd') {
-                        op1 = '+';
-                        n1 = 10 + Math.floor(Math.random() * 10); 
-                        const u1_ = n1 % 10;
-                        
-                        if (Math.random() < 0.5) { 
-                            let maxBUnit = 9 - u1_;
-                            
-                            if (Math.random() < 0.7) { 
-                                 n2 = 10 + Math.floor(Math.random() * (maxBUnit + 1));
-                                 if (n1 + n2 > maxNum) continue;
-                            } else { 
-                                n2 = 1 + Math.floor(Math.random() * maxBUnit);
-                            }
-
-                            if (n2 < 1) continue;
-                            res = n1 + n2;
-
-                            if ((n1 % 10) + (n2 % 10) <= 9 && res <= maxNum) generatedSuccessfully = true;
-
-                        } else { 
-                            let u1_ = n1 % 10;
-                            let minC = n1 + 1;
-                            let maxC = maxNum; 
-                            
-                            let uC = u1_ + 1 + Math.floor(Math.random() * (9 - u1_)); 
-                            
-                            res = minC + Math.floor(Math.random() * (maxC - minC + 1));
-                            
-                            res = Math.floor(res / 10) * 10 + uC;
-                            if (res > maxNum || res < minC) continue;
-                            
-                            n2 = res - n1; 
-                            unknownPos = 'n2';
-
-                            if (n2 > 0 && (n1 % 10) + (n2 % 10) <= 9) generatedSuccessfully = true;
-                        }
-
-
-                    } else if (generatorMode === 'noBreakSub') {
-                        op1 = '-';
-                        n1 = 11 + Math.floor(Math.random() * 9); 
-                        const u1_ = n1 % 10;
-                        
-                        if (Math.random() < 0.5) { 
-                            let maxB = Math.min(n1 - 1, (Math.floor(n1/10) * 10) + u1_); 
-                            if (Math.random() < 0.7) { 
-                                n2 = 10 + Math.floor(Math.random() * (u1_ + 1));
-                                if (n2 >= n1) n2 = 10 + u1_ - 1; 
-                            } else { 
-                                n2 = 1 + Math.floor(Math.random() * u1_);
-                            }
-                            
-                            if (n2 < 1) continue; 
-                            res = n1 - n2;
-                            
-                            if (n1 > 10 && (n1 % 10) >= (n2 % 10) && res > 0) generatedSuccessfully = true;
-
-                        } else { 
-                            let u1_ = n1 % 10;
-                            let uC = 0 + Math.floor(Math.random() * (u1_ + 1)); 
-                            let minC = 1;
-                            let maxC = n1 - 1; 
-
-                            res = 1 + Math.floor(Math.random() * (maxC - minC + 1)); 
-                            res = Math.floor(res / 10) * 10 + uC;
-                            if (res > maxC || res < minC) continue;
-
-                            n2 = n1 - res; 
-                            
-                            if (n1 > 10 && (res % 10) <= u1_ && n2 > 0) { 
-                                unknownPos = 'n2'; generatedSuccessfully = true;
-                            }
-                        }
-
-
-                    } else if (generatorMode === 'pingShi' || generatorMode === 'jieShi') {
-                        op1 = '-'; 
-                        n1 = 11 + Math.floor(Math.random() * 9); 
-                        let uD = n1 % 10; 
-                        
-                        if (Math.random() < 0.5) { 
-                            n2 = uD + 1 + Math.floor(Math.random() * (9 - uD)); 
-                            if (n2 >= n1) n2 = n1 - 1; 
-                            res = n1 - n2;
-                            unknownPos = 'res';
-                            const isBreakTenCheck = n1 > 10 && n2 % 10 > uD;
-                            if (isBreakTenCheck && res >= 0) generatedSuccessfully = true;
-                        } else {
-                            let uD = n1 % 10; 
-                            let minC = uD + 1; 
-                            let maxC = n1 - 1; 
-                            
-                            if (maxC < minC) continue; 
-                            
-                            res = minC + Math.floor(Math.random() * (maxC - minC + 1)); 
-                            
-                            n2 = n1 - res; 
-                            unknownPos = 'n2';
-
-                            if (n1 > 10 && n2 > 0 && (res % 10) > uD) generatedSuccessfully = true;
-                        }
-                    
                     } else if (generatorMode === 'add') { 
                         op1 = '+'; 
                         n1 = Math.floor(Math.random() * (maxNum + 1)); 
@@ -1183,21 +1164,22 @@
                 operator1: op1, 
                 num3: n3, 
                 operator2: op2, 
-                answer: (unknownPos === 'res' || generatorMode === 'continuous') ? res : n2, 
+                // 答案取决于未知数的位置
+                answer: (unknownPos === 'res' && generatorMode !== 'continuous') ? res : (generatorMode === 'continuous' ? res : n2),
                 unknownPosition: unknownPos 
             };
             
             // **4. 更新显示元素 (确保能找到元素才能设置)**
             
             if (unknownPos === 'n2') {
-                // 格式: A op ? = C (答案是 n2)
+                // 格式: A op ? = C (答案是原 n2)
                 n1El.textContent = n1; 
                 op1El.textContent = op1; 
                 n2El.textContent = '?'; 
                 
                 // 等号和已知结果 (C)
                 equalsSignEl.textContent = '=';
-                const knownResult = n1 + (op1 === '+' ? n2 : -n2);
+                const knownResult = n1 + (op1 === '+' ? currentProblem.answer : -currentProblem.answer);
                 resultDisplayEl.textContent = knownResult;
             } else {
                 // 格式: A op B = ? 或 A op B op C = ? (答案是 res)
