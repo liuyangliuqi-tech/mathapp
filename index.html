@@ -873,8 +873,14 @@
             resultDisplayEl.textContent = result_display;
 
             ansInput.value = ''; if (shouldFocus) ansInput.focus();
-            if (isExamMode) { feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题 (题型: ${currentProblem.specificMode || '混合'})`; } 
-            else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) { feedbackEl.textContent = ''; }
+            
+            // **修改点：移除考试进度中的题型信息**
+            if (isExamMode) { 
+                feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`; 
+            } 
+            else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) { 
+                feedbackEl.textContent = ''; 
+            }
         }
         
         // --- 提示步骤逻辑 (保持不变) ---
