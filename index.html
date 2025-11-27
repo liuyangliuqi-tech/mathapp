@@ -1025,6 +1025,8 @@
     }
 
     // 提示逻辑总调度
+
+    // 提示逻辑总调度 —— 完整修复版（2025最新版
     function getSingleOpHintSteps(n1, n2, op, forcedMode = null, unknownPos = 'res') {
         const res = op === '+' ? n1 + n2 : n1 - n2;
         const effectiveMode = forcedMode || currentProblem.specificMode;
@@ -1032,92 +1034,102 @@
         let t = '', s = '', formulaHTML = '';
         let calculationDetails = {};
 
-        // --- 1. 求解未知数逻辑 (? op B = C) 或 (A op ? = C) ---
-        if (unknownPos === 'n1' || unknownPos === 'n2') {
-            const n1Known = unknownPos === 'n2' ? n1 : n2; // The known non-result number (A or B)
-            const n2Answer = unknownPos === 'n2' ? n2 : n1; // The calculated unknown number (?=A or ?=B)
-            const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer); // C (the result displayed)
+        // --- 1. 求解未知数的情况：? op B = C  或  A op ? = C  (关系转换) ---
+        if (unknownPos !== 'res') {
+            const n1Known = unknownPos === 'n2' ? n1 : n2;           // 已知的那一个运算数
+            const n2Answer = unknownPos === 'n2' ? n2 : n1;           // 要求解的未知数
+            const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer);
 
             let subN1, subN2, conversionText, conversionOp = '-';
 
             if (op === '-') {
-                if (unknownPos === 'n1') { // ? - B = C -> ? = C + B (加法)
+                if (unknownPos === 'n1') { // ? − B = C  →  ? = C + B（加法）
                     subN1 = knownResult; subN2 = n1Known; conversionOp = '+';
-                    t = '🧮 求解未知被减数 (? = C + B)';
-                    conversionText = `：🔍 未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
+                    t = '求解未知被减数 (? = C + B)';
+                    conversionText = `：未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
 
+                    // 加法走凑十法/同位相加（保持原来最优逻辑）
                     const u1 = subN1 % 10, u2 = subN2 % 10;
                     const isCouShi = u1 + u2 > 9;
-                    const addFunc = isCouShi ? getCouShiSteps : getNoCarryAddSteps;
-                    calculationDetails = addFunc(subN1, subN2, n2Answer);
+                    calculationDetails = isCouShi ? getCouShiSteps(subN1, subN2, subN1 + subN2)
+                        : getNoCarryAddSteps(subN1, subN2, subN1 + subN2);
 
-                } else { // unknownPos === 'n2', A - ? = C -> ? = A - C (减法)
+                } else { // A − ? = C  →  ? = A − C（减法）
                     subN1 = n1; subN2 = knownResult;
-                    t = '🧮 求解未知减数 (? = A - C)';
-                    conversionText = `：🔍 ${numRedSpan(n1)} 减去未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(n1)} **减去** ${numRedSpan(knownResult)}。`;
+                    t = '求解未知减数 (? = A − C)';
+                    conversionText = `：${numRedSpan(n1)} 减去未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(n1)} **减去** ${numRedSpan(knownResult)}。`;
+
+                    // ────────────────── 关键修复：强制使用当前选择的模式 ──────────────────
+                    if (currentMode === 'pingShi') {
+                        calculationDetails = getPingShiSteps(subN1, subN2, subN1 - subN2);
+                    } else if (currentMode === 'jieShi') {
+                        calculationDetails = getJieShiSteps(subN1, subN2, subN1 - subN2);
+                    } else {
+                        // 其他模式（混合、考试等）保持原来智能判断
+                        const { func: subFunc } = getSubtractionMethod(subN1, subN2);
+                        calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
+                    }
+                    // ────────────────── 修复结束 ─────────────────────────────
+                }
+            } else if (op === '+') {
+                // A + ? = C 或 ? + B = C  →  都变成减法
+                subN1 = knownResult; subN2 = n1Known;
+                t = '求解未知加数';
+                conversionText = `：已知和是 ${numRedSpan(knownResult)}，其中一个加数是 ${numRedSpan(n1Known)}，所以未知加数等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
+
+                if (currentMode === 'pingShi') {
+                    calculationDetails = getPingShiSteps(subN1, subN2, subN1 - subN2);
+                } else if (currentMode === 'jieShi') {
+                    calculationDetails = getJieShiSteps(subN1, subN2, subN1 - subN2);
+                } else {
                     const { func: subFunc } = getSubtractionMethod(subN1, subN2);
                     calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
                 }
-            } else if (op === '+') {
-                // ? + B = C OR A + ? = C -> ? = C - B OR ? = C - A (减法)
-                subN1 = knownResult; subN2 = n1Known;
-                if (unknownPos === 'n1') {
-                    t = '🧮 求解未知加数 (? = C - B)';
-                    conversionText = `：🔍 未知数 (?) 加上 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
-                } else { // unknownPos === 'n2'
-                    t = '🧮 求解未知加数 (? = C - A)';
-                    conversionText = `：🔍 ${numRedSpan(n1Known)} 加上未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
-                }
-                const { func: subFunc } = getSubtractionMethod(subN1, subN2);
-                calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
             }
 
             const calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796\s\u2705]/g, '').trim();
 
-            // 步骤 1: 关系转换
-            s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
+            // 步骤 1：关系转换
+            s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍|：/g, ''))}</div>`;
 
-            // 【修正】将转换公式直接插入到步骤 1 之后
-            const conversionFormula = `<span class="formula conversion-formula fade-start">${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)} ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}</span>`;
+            // 转换公式（橙色背景）
+            const conversionFormula = `<span class="formula conversion-formula fade-start">
+            ${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)}
+            ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult}
+            ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)}
+            ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}
+        </span>`;
             s += conversionFormula;
 
-            // 修正：重新编号计算步骤 (从 步骤 2 开始)
+            // 让后面步骤从“步骤 2”开始编号
             let calcStepsHtml = calculationDetails.stepsHTML;
-            let continuousStepNumber = 2;
-            // 正则表达式匹配 '<strong>步骤 X:' 并替换为连续编号
-            calcStepsHtml = calcStepsHtml.replace(/<strong>步骤 \d:/g, () => {
-                return `<strong>步骤 ${continuousStepNumber++}:`;
-            });
-            s += calcStepsHtml; // 追加重新编号后的步骤
+            let stepNum = 2;
+            calcStepsHtml = calcStepsHtml.replace(/<strong>步骤 \d+:/g, () => `<strong>步骤 ${stepNum++}:`);
+            s += calcStepsHtml;
 
             t += ` (计算使用：${calculationTitle})`;
+            formulaHTML = calculationDetails.formula;
 
-            let calculationFormula = calculationDetails.formula;
-            calculationFormula = calculationFormula.replace(/<span class="formula">/g, '<span class="formula" style="margin-top: 0;">');
-
-            // 【修正】最终 formulaHTML 只包含计算公式（将被放在最底部）
-            formulaHTML = calculationFormula;
             return { title: t, stepsHTML: s, formula: formulaHTML };
         }
 
-        // --- 2. 标准运算逻辑 (A op B = ?) ---
+        // --- 2. 普通题目 A ± B = ? （无关系转换）---
         if (op === '+') {
             const u1 = n1 % 10, u2 = n2 % 10;
             const isCouShi = u1 + u2 > 9;
-
-            if (effectiveMode === 'couShi' && isCouShi) return getCouShiSteps(n1, n2, res);
-            if (effectiveMode === 'noCarryAdd' && !isCouShi) return getNoCarryAddSteps(n1, n2, res);
-            if (isCouShi) return getCouShiSteps(n1, n2, res);
+            if (currentMode === 'couShi' || effectiveMode === 'couShi') return getCouShiSteps(n1, n2, res);
             return getNoCarryAddSteps(n1, n2, res);
-
-        } else if (op === '-') {
+        }
+        else if (op === '-') {  // 减法
             const u1 = n1 % 10, u2 = n2 % 10;
             const isBreakTen = n1 > 10 && u2 > u1;
 
-            if (isBreakTen && effectiveMode === 'jieShi' && n1 <= 20) return getJieShiSteps(n1, n2, res);
-            if (isBreakTen && effectiveMode === 'pingShi') return getPingShiSteps(n1, n2, res);
-            if (effectiveMode === 'noBreakSub' && !isBreakTen) return getNoBreakSubSteps(n1, n2, res);
+            // 当前选择的专项模式永远优先！
+            if (currentMode === 'pingShi') return getPingShiSteps(n1, n2, res);
+            if (currentMode === 'jieShi') return getJieShiSteps(n1, n2, res);
+            if (currentMode === 'noBreakSub') return getNoBreakSubSteps(n1, n2, res);
 
+            // 兜底（混合模式、考试等）
             if (isBreakTen && n1 <= 20) return getJieShiSteps(n1, n2, res);
             if (isBreakTen) return getPingShiSteps(n1, n2, res);
             return getNoBreakSubSteps(n1, n2, res);
