@@ -836,30 +836,43 @@
             // 标准练习模式的生成逻辑 (保持不变)
             if (isExamMode) submitBtn.disabled = false;
 
-            const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
+            let allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
             let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
             // 凑十法模式下强制只用加法生成题目，永不出现减法！
+            // 凑十法：20 以内，纯正宗，永不串题（超简版 8 8 行）
+            // 同位相加法（不进位）模式下，坚决不出任何带问号的题目！
+            if (generatorMode === 'noCarryAdd') {
+                allowUnknown = false;   // ← 加上这行
+            }
             if (generatorMode === 'couShi') {
-                let n1 = rand(7, 18);
-                let need = 10 - (n1 % 10);
-                if (need <= 0 || need > 9) need = rand(2, 9);
-                let n2 = need + rand(1, 8);
-                if (n1 + n2 > maxNum) n2 = maxNum - n1;
-                currentProblem = {
-                    num1: n1,
-                    num2: n2,
-                    operator1: '+',
-                    answer: n1 + n2,
-                    unknownPosition: 'res',
-                    specificMode: 'couShi'
-                };
-                // 直接 return，不走下面的生成逻辑
-                const { num1, num2, operator1, answer } = currentProblem;
-                n1El.textContent = num1; op1El.textContent = operator1; n2El.textContent = num2;
+                const pairs = [[9,4],[9,5],[9,6],[9,7],[9,8],[8,3],[8,4],[8,5],[8,6],[8,7],[8,8],[7,4],[7,5],[7,6],[7,7],[7,8],[6,5],[6,6],[6,7],[6,8],[5,6],[5,7],[5,8],[4,7],[4,8]];
+                let [a, b] = pairs[Math.floor(Math.random() * pairs.length)];
+                if (Math.random() < 0.5) [a, b] = [b, a];           // 随机交换顺序
+
+                currentProblem = { num1: a, num2: b, operator1: '+', answer: a+b, unknownPosition: 'res', specificMode: 'couShi' };
+                n1El.textContent = a; op1El.textContent = '+'; n2El.textContent = b;
                 equalsSignEl.textContent = '='; resultDisplayEl.textContent = '?';
                 ansInput.value = ''; if (shouldFocus) ansInput.focus();
                 return;
             }
+
+            if (generatorMode === 'noBreakSub') {                      // 同位相减法 → 只出不破十减法
+                let n1, n2;
+                do {
+                    n1 = rand(11, 19);                     // 改这里！上限改成19，彻底排除20
+                    const unit1 = n1 % 10;
+                    n2 = rand(1, unit1);                   // 个位必须够减
+                    if (n2 === 0) n2 = rand(1, unit1);     // 避免出现 xx − 0
+                } while (n2 >= n1 || n2 <= 0);
+
+                currentProblem = {num1:n1,num2:n2,operator1:'-',answer:n1-n2,unknownPosition:'res',specificMode:'noBreakSub'};
+                n1El.textContent=n1; op1El.textContent='-'; n2El.textContent=n2;
+                equalsSignEl.textContent='='; resultDisplayEl.textContent='?';
+                ansInput.value=''; if(shouldFocus)ansInput.focus();
+                return;
+            }
+
+
             const generatorFn = getGenerator(generatorMode);
             //const generatorFn = getGenerator(generatorMode);
 
