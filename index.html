@@ -838,7 +838,30 @@
 
             const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
             let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
+            // 凑十法模式下强制只用加法生成题目，永不出现减法！
+            if (generatorMode === 'couShi') {
+                let n1 = rand(7, 18);
+                let need = 10 - (n1 % 10);
+                if (need <= 0 || need > 9) need = rand(2, 9);
+                let n2 = need + rand(1, 8);
+                if (n1 + n2 > maxNum) n2 = maxNum - n1;
+                currentProblem = {
+                    num1: n1,
+                    num2: n2,
+                    operator1: '+',
+                    answer: n1 + n2,
+                    unknownPosition: 'res',
+                    specificMode: 'couShi'
+                };
+                // 直接 return，不走下面的生成逻辑
+                const { num1, num2, operator1, answer } = currentProblem;
+                n1El.textContent = num1; op1El.textContent = operator1; n2El.textContent = num2;
+                equalsSignEl.textContent = '='; resultDisplayEl.textContent = '?';
+                ansInput.value = ''; if (shouldFocus) ansInput.focus();
+                return;
+            }
             const generatorFn = getGenerator(generatorMode);
+            //const generatorFn = getGenerator(generatorMode);
 
             try {
                 while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
