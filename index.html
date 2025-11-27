@@ -1280,23 +1280,76 @@
     };
 
     function generateReportImage() {
-        const reportEl = getElementByIdSafe('examReportContent');
-        if (typeof html2canvas === 'undefined' || !html2canvas) { alert('图片生成库加载失败。'); return; }
+        const reportEl = document.getElementById('examReportContent');
+        if (typeof html2canvas === 'undefined') {
+            alert('图片生成库加载失败，请刷新页面重试');
+            return;
+        }
+
+        // 隐藏按钮，避免出现在图片里
         const actionsDiv = reportEl.querySelector('.report-actions');
         actionsDiv.classList.add('hide-for-capture');
-        html2canvas(reportEl, { scale: 3, useCORS: true, backgroundColor: '#ffffff', allowTaint: true, removeContainer: true }).then(canvas => {
+
+        html2canvas(reportEl, {
+            scale: window.devicePixelRatio || 2,  // 超高清，手机截图级清晰
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        }).then(canvas => {
             actionsDiv.classList.remove('hide-for-capture');
-            const imgURL = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
-            const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '');
-            a.download = `数学测试成绩_${score.toFixed(0)}分_${today}.png`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }).catch(error => {
-            actionsDiv.classList.remove('hide-for-capture');
-            console.error('Error generating image:', error);
-            alert('生成图片失败。');
+
+            // 生成图片
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS * 100).toFixed(0);
+                const today = new Date().toLocaleDateString('zh-CN').replace(/\//g, '');
+                const filename = `刘书语数学成绩_${score}分_${today}.png`;
+
+                // ---------- 手机端完美支持 ----------
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], filename, {type: 'image/png'})] })) {
+                    // 支持微信、QQ、保存到相册（iOS/Android 都行）
+                    const file = new File([blob], filename, { type: 'image/png' });
+                    navigator.share({
+                        title: '刘书语的数学成绩单',
+                        text: `今天考了 ${score} 分！快来夸夸我`,
+                        files: [file]
+                    }).catch(() => {
+                        // 如果用户取消分享，就走下载
+                        downloadImage(url, filename);
+                    });
+                }
+                // iOS Safari / 部分安卓浏览器：直接下载
+                else if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+                    // iOS 长按保存最方便
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.cssText = 'max-width:100%; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3);';
+                    const tip = document.createElement('div');
+                    tip.innerHTML = `<p style="font-size:18px; color:#d97706; margin:20px 0;">
+                    长按图片 →「存储图像」即可保存到相册<br>
+                    或者点右上角「··· → 分享到微信
+                </p>`;
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;';
+                    container.appendChild(tip);
+                    container.appendChild(img);
+                    container.onclick = () => document.body.removeChild(container);
+                    document.body.appendChild(container);
+                }
+                // 普通下载（电脑 + 部分安卓）
+                else {
+                    downloadImage(url, filename);
+                }
+            }, 'image/png');
         });
+    }
+
+    // 普通下载函数（兜底）
+    function downloadImage(dataUrl, filename) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        a.click();
     }
 
     function endExam() {
