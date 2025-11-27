@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>刘书语的魔法数学特训营</title> 
+    <title>刘书语的魔法数学特训营</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="数学特训营">
-    
+
     <style>
         /* --- 通用样式 (保持不变) --- */
         * { touch-action: manipulation; box-sizing: border-box; }
         :root {
-            --color-apple-blue: #007aff; --color-apple-green: #34c759; 
-            --color-apple-red: #ff3b30; --color-apple-orange: #ff9500; 
+            --color-apple-blue: #007aff; --color-apple-green: #34c759;
+            --color-apple-red: #ff3b30; --color-apple-orange: #ff9500;
             --color-background-soft: #f2f2f7; --color-card-bg: #f7f7f9;
             --color-text-dark: #1d1d1f; --color-button-secondary: #e5e5ea;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--color-background-soft); color: var(--color-text-dark);
-            margin: 0; padding: 0; display: flex; justify-content: center; 
-            min-height: 100vh; padding-bottom: 20px; -webkit-text-size-adjust: 100%; 
+            margin: 0; padding: 0; display: flex; justify-content: center;
+            min-height: 100vh; padding-bottom: 20px; -webkit-text-size-adjust: 100%;
         }
         .container {
-            width: 100%; max-width: 900px; background-color: #ffffff; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); padding: 2vh 4vw; 
-            text-align: center; display: flex; flex-direction: column; 
-            align-items: center; min-height: 10vh; 
+            width: 100%; max-width: 900px; background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); padding: 2vh 4vw;
+            text-align: center; display: flex; flex-direction: column;
+            align-items: center; min-height: 10vh;
         }
         .header-section { width: 100%; flex-shrink: 0; padding-top: 1vh; display: flex; flex-direction: column; align-items: center; }
         h1 { font-size: clamp(24px, 3.5vw, 32px); font-weight: 700; margin-bottom: 0.5vh; }
@@ -36,22 +36,22 @@
         .mode-switch-group { width: 90%; max-width: 500px; margin-bottom: 2vh; }
         .mode-select {
             width: 100%; padding: 1.5vh 12px; font-size: clamp(14px, 2.2vw, 16px);
-            border-radius: 10px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08); 
+            border-radius: 10px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
             appearance: none; -webkit-appearance: none; -moz-appearance: none; border: 1px solid #ccc;
         }
         .score-board {
-            display: flex; justify-content: space-around; margin-top: 1vh; margin-bottom: 2.5vh; 
-            padding: 1.5vh 10px; background-color: var(--color-card-bg); border-radius: 12px; 
+            display: flex; justify-content: space-around; margin-top: 1vh; margin-bottom: 2.5vh;
+            padding: 1.5vh 10px; background-color: var(--color-card-bg); border-radius: 12px;
             width: 80%; max-width: 500px;
         }
         .score-item { font-size: clamp(14px, 2.5vw, 16px); font-weight: 500; }
         .score-item span { color: var(--color-apple-blue); font-weight: 700; }
-        .main-calculation-area { 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            width: 100%; padding-top: 2vh; padding-bottom: 2vh; position: relative; 
+        .main-calculation-area {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            width: 100%; padding-top: 2vh; padding-bottom: 2vh; position: relative;
         }
-        .math-problem { 
-            font-size: 11vw; font-weight: 800; margin: 1vh 0; min-height: 15vw; 
+        .math-problem {
+            font-size: 11vw; font-weight: 800; margin: 1vh 0; min-height: 15vw;
             display: flex; justify-content: center; align-items: center; gap: 15px;
         }
         .math-problem.three-op { font-size: 8vw; }
@@ -59,13 +59,13 @@
             .math-problem { font-size: 15vw; gap: 10px; }
             .math-problem.three-op { font-size: 10vw; }
         }
-        .input-wrapper { 
-            margin-top: 4vh; margin-bottom: 5vh; display: flex; flex-wrap: wrap; 
-            justify-content: center; gap: 10px; width: 100%; max-width: 400px; 
+        .input-wrapper {
+            margin-top: 4vh; margin-bottom: 5vh; display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 10px; width: 100%; max-width: 400px;
         }
-        #answerInput { 
-            padding: 2vh 15px; font-size: clamp(20px, 3.5vw, 24px); border-radius: 10px; 
-            margin-bottom: 10px; width: clamp(150px, 40vw, 200px); transition: all 0.2s; 
+        #answerInput {
+            padding: 2vh 15px; font-size: clamp(20px, 3.5vw, 24px); border-radius: 10px;
+            margin-bottom: 10px; width: clamp(150px, 40vw, 200px); transition: all 0.2s;
             border: 1px solid #ccc; text-align: center;
         }
         .wrong-flash {
@@ -78,27 +78,27 @@
             40%, 80% { transform: translateX(5px); }
         }
         #newProblemButton {
-            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
+            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600;
             background-color: var(--color-button-secondary); color: var(--color-text-dark);
-            border-radius: 10px; border: none; cursor: pointer; transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
+            border-radius: 10px; border: none; cursor: pointer; transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0;
         }
         @media (min-width: 601px) {
-             #newProblemButton.icon-mode {
-                 position: absolute; top: 50%; right: 5%; transform: translateY(-50%);
-                 padding: 10px; font-size: 20px; border-radius: 50%; width: 40px; height: 40px;
-                 display: flex; align-items: center; justify-content: center;
-                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); opacity: 0.8; z-index: 10;
-             }
-             #newProblemButton .button-text { display: none; }
+            #newProblemButton.icon-mode {
+                position: absolute; top: 50%; right: 5%; transform: translateY(-50%);
+                padding: 10px; font-size: 20px; border-radius: 50%; width: 40px; height: 40px;
+                display: flex; align-items: center; justify-content: center;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); opacity: 0.8; z-index: 10;
+            }
+            #newProblemButton .button-text { display: none; }
         }
-        #submitButton, #hintButton { 
-            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600; 
-            border-radius: 10px; border: none; cursor: pointer; 
-            transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0; 
+        #submitButton, #hintButton {
+            padding: 2vh 4vw; font-size: clamp(14px, 2.5vw, 16px); font-weight: 600;
+            border-radius: 10px; border: none; cursor: pointer;
+            transition: opacity 0.2s, background-color 0.2s; flex-shrink: 0;
         }
         #submitButton { background-color: var(--color-apple-blue); color: white; }
         #hintButton { background-color: var(--color-apple-orange); color: var(--color-text-dark); }
-        
+
         #hintButton:disabled, #newProblemButton:disabled, #submitButton:disabled {
             opacity: 0.5; cursor: not-allowed;
         }
@@ -106,8 +106,8 @@
         @media (max-width: 600px) {
             .input-wrapper { flex-direction: column; align-items: center; padding: 0 5%; max-width: 100%; }
             #answerInput { width: 100%; max-width: 250px; }
-            #submitButton, #hintButton, #newProblemButton { 
-                width: 100%; max-width: 250px; margin-bottom: 5px; position: static; transform: none; padding: 2vh 4vw; 
+            #submitButton, #hintButton, #newProblemButton {
+                width: 100%; max-width: 250px; margin-bottom: 5px; position: static; transform: none; padding: 2vh 4vw;
             }
             #newProblemButton .button-text { display: inline-block; }
         }
@@ -116,7 +116,7 @@
         .feedback-wrong { color: var(--color-apple-red); }
         .vfx-container {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 1px; height: 1px; pointer-events: none; overflow: visible; z-index: 50; 
+            width: 1px; height: 1px; pointer-events: none; overflow: visible; z-index: 50;
         }
         .correct-vfx {
             position: absolute; font-size: 20px; color: gold; text-shadow: 0 0 5px orange;
@@ -127,25 +127,25 @@
             25% { opacity: 1; }
             100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5); }
         }
-        
+
         /* --- 模态框通用样式 --- */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;
         }
-        #hintModal { z-index: 1050; } 
-        
+        #hintModal { z-index: 1050; }
+
         /* 模态框内容样式 */
         #examModal .modal-content, #hintModal .modal-content {
-            background-color: #ffffff; margin: 5vh auto; padding: 3vh 4vw; border-radius: 20px; 
-            width: 95%; max-width: 700px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2); 
-            animation: modalopen 0.4s ease-out; text-align: left; 
+            background-color: #ffffff; margin: 5vh auto; padding: 3vh 4vw; border-radius: 20px;
+            width: 95%; max-width: 700px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            animation: modalopen 0.4s ease-out; text-align: left;
             max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
-        
+
         .modal-title { font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--color-text-dark); margin-bottom: 2vh; border-bottom: 2px solid #ddd; padding-bottom: 1vh; }
         .modal-close { float: right; font-size: clamp(24px, 5vw, 32px); font-weight: 300; cursor: pointer; color: #888; transition: color 0.2s; }
-        
+
         /* --- 可视化辅助画图样式 (10格阵) --- */
         .visual-container {
             margin: 15px 0;
@@ -160,7 +160,7 @@
             align-items: center; /* 垂直居中 */
             max-width: 100%;
         }
-        
+
         /* 每个小物品的样式 */
         .visual-item {
             width: 32px; height: 32px;
@@ -172,7 +172,7 @@
             border: 1px solid #eee;
             transition: all 0.3s;
         }
-        
+
         /* 手机端适配：缩小图标 */
         @media (max-width: 500px) {
             .visual-container { gap: 4px; padding: 10px 5px; }
@@ -187,7 +187,7 @@
             text-decoration: line-through;
             background-color: #f5f5f5;
         }
-        
+
         .visual-legend {
             grid-column: 1 / -1; /* 占满整行 */
             font-size: 14px; color: #555; text-align: center; margin-top: 10px; font-weight: 600;
@@ -198,46 +198,46 @@
 
         /* --- 提示步骤样式 --- */
         .modal-step {
-            margin-bottom: 2vh; 
-            font-size: clamp(15px, 2.5vw, 18px); 
+            margin-bottom: 2vh;
+            font-size: clamp(15px, 2.5vw, 18px);
             line-height: 1.6;
-            padding-left: 10px; 
-            border-left: 4px solid var(--color-apple-blue); 
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out; 
+            padding-left: 10px;
+            border-left: 4px solid var(--color-apple-blue);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
-        .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; } 
+        .modal-step strong { display: block; margin-bottom: 0.5vh; font-weight: 800; }
         .modal-step.fade-start { opacity: 0; transform: translateY(10px); }
         .modal-step.fade-end { opacity: 1; transform: translateY(0); }
-        
+
         /* 强调色定义 */
-        .highlight-ten { color: var(--color-apple-orange); font-weight: 700; } 
-        .highlight-goal { color: var(--color-apple-green); font-weight: 700; } 
-        .highlight-remain { color: var(--color-apple-blue); font-weight: 700; } 
-        
+        .highlight-ten { color: var(--color-apple-orange); font-weight: 700; }
+        .highlight-goal { color: var(--color-apple-green); font-weight: 700; }
+        .highlight-remain { color: var(--color-apple-blue); font-weight: 700; }
+
         /* 公式样式优化 */
-        .formula { 
-            font-size: clamp(18px, 3.5vw, 24px); font-weight: 800; color: var(--color-text-dark); 
-            display: block; margin-top: 2vh; margin-bottom: 2vh; text-align: center; 
-            background-color: var(--color-card-bg); padding: 1.5vh; border-radius: 10px; 
+        .formula {
+            font-size: clamp(18px, 3.5vw, 24px); font-weight: 800; color: var(--color-text-dark);
+            display: block; margin-top: 2vh; margin-bottom: 2vh; text-align: center;
+            background-color: var(--color-card-bg); padding: 1.5vh; border-radius: 10px;
             letter-spacing: 1px; box-shadow: 0 0 3px rgba(0, 0, 0, 0.05);
             /* **新增过渡效果** */
-            transition: opacity 0.5s ease-in, transform 0.5s ease-in; 
+            transition: opacity 0.5s ease-in, transform 0.5s ease-in;
             opacity: 1; /* 默认可见 */
         }
         /* **新增：公式初始隐藏/淡入状态** */
         .formula.fade-start {
-            opacity: 0 !important; 
+            opacity: 0 !important;
             transform: translateY(10px);
         }
 
         .formula .op-red { color: var(--color-apple-red); }
         .formula .num-red { color: var(--color-apple-red); }
-        
+
         /* **新增：转换公式的特殊样式和过渡（用于顺序展示）** */
         .formula.conversion-formula {
-            font-size: clamp(16px, 3vw, 20px); 
-            margin-top: 0.5vh; 
-            margin-bottom: 1.5vh; 
+            font-size: clamp(16px, 3vw, 20px);
+            margin-top: 0.5vh;
+            margin-bottom: 1.5vh;
             color: var(--color-apple-orange);
             background-color: #ffeccf; /* 浅橙色背景 */
             padding: 1vh;
@@ -251,32 +251,32 @@
 
         /* --- 成绩单样式 --- */
         #examReportContent {
-            padding-bottom: 20px; position: relative; 
+            padding-bottom: 20px; position: relative;
             background-color: #fff; border-radius: 15px; border: 2px solid #ccc;
         }
         .exam-report-inner { padding: 20px; }
-        .report-header { 
+        .report-header {
             text-align: center; margin-bottom: 20px; max-width: 90%; margin-left: auto; margin-right: auto;
         }
-        .report-header h3 { 
-            font-size: 26px; font-weight: 800; color: var(--color-text-dark); margin: 0; 
-            border-bottom: 3px double #333; padding-bottom: 5px; white-space: nowrap; 
+        .report-header h3 {
+            font-size: 26px; font-weight: 800; color: var(--color-text-dark); margin: 0;
+            border-bottom: 3px double #333; padding-bottom: 5px; white-space: nowrap;
         }
-        .info-row { 
-            display: flex; justify-content: space-around; font-size: 16px; 
-            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px dashed #ddd; width: 100%; 
+        .info-row {
+            display: flex; justify-content: space-around; font-size: 16px;
+            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px dashed #ddd; width: 100%;
         }
         .info-item { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .info-item span { font-weight: 700; color: var(--color-apple-blue); }
         .score-box {
-            position: absolute; top: 10px; right: 20px; 
+            position: absolute; top: 10px; right: 20px;
             width: 80px; height: 80px; border: 2px solid var(--color-apple-red);
             border-radius: 5px; display: flex; align-items: center; justify-content: center;
             font-size: 36px; font-weight: 800; color: var(--color-apple-red); line-height: 1;
         }
         .problem-list { margin-top: 10px; list-style: none; padding: 0; }
-        .problem-item { 
-            display: grid; grid-template-columns: 2fr 1fr 1fr 50px; align-items: center; 
+        .problem-item {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 50px; align-items: center;
             padding: 8px 0; border-bottom: 1px dotted #eee; font-size: 18px; gap: 5px;
         }
         .problem-text { font-weight: 500; color: var(--color-text-dark); text-align: left; }
@@ -289,7 +289,7 @@
             cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); flex-shrink: 0;
         }
         .problem-mark { font-size: 30px; font-weight: 900; font-family: Arial, sans-serif; line-height: 1; flex-shrink: 0; }
-        .mark-wrong { color: #ff3b30; } 
+        .mark-wrong { color: #ff3b30; }
         .report-actions { display: flex; justify-content: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
         .report-actions button {
             padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
@@ -303,968 +303,993 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-section">
-            <h1>🥳 刘书语的魔法数学特训营</h1>
-            <p class="tagline">🥇 成为全班数学小冠军！ (一年级方法专项练习)</p>
-            <div class="mode-switch-group">
-                <div class="select-wrapper">
-                    <select id="modeSelect" class="mode-select">
-                        <optgroup label="基础运算模式">
-                            <option value="add">基础加法</option>
-                            <option value="sub">基础减法</option>
-                            <option value="mixed">混合练习</option>
-                            <option value="continuous">🔥 连续运算</option>
-                        </optgroup>
-                        <optgroup label="专项方法练习">
-                            <option value="noCarryAdd">🎯 同位相加法 (不进位)</option>
-                            <option value="noBreakSub">🎯 同位相减法 (不破十)</option>
-                            <option value="couShi">🎯 凑十法</option>
-                            <option value="jieShi" selected>🎯 借十法</option>
-                            <option value="pingShi">🎯 平十法</option>
-                        </optgroup>
-                        <optgroup label="考试与挑战">
-                            <option value="exam">💯 10题快速考试</option>
-                        </optgroup>
-                    </select>
-                </div>
-            </div>
-            <div class="score-board">
-                <div class="score-item">正确: <span id="correctCount">0</span></div>
-                <div class="score-item">错误: <span id="wrongCount">0</span></div>
-                <div class="score-item">总数: <span id="totalCount">0</span></div>
+<div class="container">
+    <div class="header-section">
+        <h1>🥳 刘书语的魔法数学特训营</h1>
+        <p class="tagline">🥇 成为全班数学小冠军！ (一年级方法专项练习)</p>
+        <div class="mode-switch-group">
+            <div class="select-wrapper">
+                <select id="modeSelect" class="mode-select">
+                    <optgroup label="基础运算模式">
+                        <option value="add">基础加法</option>
+                        <option value="sub">基础减法</option>
+                        <option value="mixed">混合练习</option>
+                        <option value="continuous">🔥 连续运算</option>
+                    </optgroup>
+                    <optgroup label="专项方法练习">
+                        <option value="noCarryAdd">🎯 同位相加法 (不进位)</option>
+                        <option value="noBreakSub">🎯 同位相减法 (不破十)</option>
+                        <option value="couShi">🎯 凑十法</option>
+                        <option value="jieShi" selected>🎯 借十法</option>
+                        <option value="pingShi">🎯 平十法</option>
+                    </optgroup>
+                    <optgroup label="考试与挑战">
+                        <option value="exam">💯 10题快速考试</option>
+                    </optgroup>
+                </select>
             </div>
         </div>
-        <div class="main-calculation-area">
-            <div class="math-problem" id="mathProblemDisplay">
-                <span id="number1"></span><span id="operator1" class="operator"></span>
-                <span id="number2"></span><span id="operator2"></span> 
-                <span id="number3"></span><span id="equalsSign"></span><span id="resultDisplay"></span>
-            </div>
-            <div id="vfxContainer" class="vfx-container"></div>
-            <button id="newProblemButton">🔄 <span class="button-text">换题</span></button>
-            <div class="input-wrapper">
-                <input type="number" id="answerInput" placeholder="请输入答案" inputmode="numeric">
-                <button id="submitButton">提交</button>
-                <button id="hintButton">💡 提示</button>
-            </div>
-        </div>
-        <div id="feedback"></div>
-    </div>
-    
-    <div id="examModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" id="examModalClose">&times;</span>
-            <div id="examModalTitle" class="modal-title"></div>
-            <div id="examReportContent"></div>
+        <div class="score-board">
+            <div class="score-item">正确: <span id="correctCount">0</span></div>
+            <div class="score-item">错误: <span id="wrongCount">0</span></div>
+            <div class="score-item">总数: <span id="totalCount">0</span></div>
         </div>
     </div>
-
-    <div id="hintModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close" id="hintModalClose">&times;</span>
-            <div id="hintVisuals"></div> 
-            <div id="hintModalSteps"></div>
+    <div class="main-calculation-area">
+        <div class="math-problem" id="mathProblemDisplay">
+            <span id="number1"></span><span id="operator1" class="operator"></span>
+            <span id="number2"></span><span id="operator2"></span>
+            <span id="number3"></span><span id="equalsSign"></span><span id="resultDisplay"></span>
+        </div>
+        <div id="vfxContainer" class="vfx-container"></div>
+        <button id="newProblemButton">🔄 <span class="button-text">换题</span></button>
+        <div class="input-wrapper">
+            <input type="number" id="answerInput" placeholder="请输入答案" inputmode="numeric">
+            <button id="submitButton">提交</button>
+            <button id="hintButton">💡 提示</button>
         </div>
     </div>
+    <div id="feedback"></div>
+</div>
 
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<div id="examModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="examModalClose">&times;</span>
+        <div id="examModalTitle" class="modal-title"></div>
+        <div id="examReportContent"></div>
+    </div>
+</div>
 
-    <script>
-        // --- 变量和状态初始化 ---
-        // **修正 1: 将 maxNum 设置为 20**
-        let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [], unknownPosition: 'res', specificMode: null }; 
-        let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 20; 
-        let isExamMode = false; const EXAM_TOTAL_QUESTIONS = 10;
-        let examCurrentQuestion = 0, examCorrectAnswers = 0; 
-        let examProblems = []; 
-        let isSubmitting = false; 
-        const MAX_GENERATION_ATTEMPTS = 50; 
-        let currentMode = 'jieShi'; 
+<div id="hintModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="hintModalClose">&times;</span>
+        <div id="hintVisuals"></div>
+        <div id="hintModalSteps"></div>
+    </div>
+</div>
 
-        // 考试模式下的题型分布 (5个类型，每个2题)
-        const EXAM_MODES_DISTRIBUTION = [
-            'couShi', 'couShi', 
-            'jieShi', 'jieShi', 
-            'noCarryAdd', 'noCarryAdd', 
-            'noBreakSub', 'noBreakSub', 
-            'continuous', 'continuous'
-        ];
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
-        // --- 元素 ID 查找 ---
-        function getElementByIdSafe(id) {
-            const el = document.getElementById(id);
-            if (!el) {
-                console.error(`DOM Error: Element with ID "${id}" not found.`);
-                return { textContent: '', classList: { add: () => {}, remove: () => {} }, style: {}, innerHTML: '' };
-            }
-            return el;
+<script>
+    // --- 变量和状态初始化 ---
+    // **修正 1: 将 maxNum 设置为 20**
+    let currentProblem = { num1: 0, num2: 0, operator1: '+', num3: null, operator2: null, answer: 0, steps: [], unknownPosition: 'res', specificMode: null };
+    let correctCount = 0, wrongCount = 0, totalCount = 0, maxNum = 20;
+    let isExamMode = false; const EXAM_TOTAL_QUESTIONS = 10;
+    let examCurrentQuestion = 0, examCorrectAnswers = 0;
+    let examProblems = [];
+    let isSubmitting = false;
+    const MAX_GENERATION_ATTEMPTS = 50;
+    let currentMode = 'jieShi';
+
+    // 考试模式下的题型分布 (5个类型，每个2题)
+    const EXAM_MODES_DISTRIBUTION = [
+        'couShi', 'couShi',
+        'jieShi', 'jieShi',
+        'noCarryAdd', 'noCarryAdd',
+        'noBreakSub', 'noBreakSub',
+        'continuous', 'continuous'
+    ];
+
+    // --- 元素 ID 查找 ---
+    function getElementByIdSafe(id) {
+        const el = document.getElementById(id);
+        if (!el) {
+            console.error(`DOM Error: Element with ID "${id}" not found.`);
+            return { textContent: '', classList: { add: () => {}, remove: () => {} }, style: {}, innerHTML: '' };
+        }
+        return el;
+    }
+
+    const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] =
+        ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
+
+    const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
+        ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
+
+    const examReportContent = getElementByIdSafe('examReportContent');
+
+    // --- 辅助函数 ---
+    function vfx() {
+        vfxCont.innerHTML = '';
+        for (let i = 0; i < 15; i++) {
+            const v = document.createElement('div');
+            v.className = 'correct-vfx'; v.textContent = '⭐';
+            const angle = Math.random() * 2 * Math.PI;
+            const distance = 80 + Math.random() * 50;
+            v.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+            v.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+            v.style.transform = `translate(${(Math.random() - 0.5) * 20}px, ${(Math.random() - 0.5) * 20}px)`;
+            vfxCont.appendChild(v);
+            v.addEventListener('animationend', () => v.remove());
+        }
+    }
+    function wrongFlash() {
+        ansInput.classList.add('wrong-flash');
+        setTimeout(() => ansInput.classList.remove('wrong-flash'), 500);
+    }
+
+    // --- Hint Styling Helpers ---
+    const numSpan = (num, className) => `<span class="${className}">${num}</span>`;
+    const opRedSpan = (op) => `<span class="op-red">${op}</span>`;
+    const numRedSpan = (num) => `<span class="num-red">${num}</span>`;
+    const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
+    const stepContent = (title, content) => `<strong>${title}</strong>${content}`;
+
+    // --- 可视化画图函数 (保持不变) ---
+    function renderVisualHelpers(container, n1, n2, op) {
+        container.innerHTML = '';
+        // **更新: 将最大画图数字从 30 更改为 20**
+        if (n1 > 20) {
+            const msg = document.createElement('div');
+            msg.className = 'visual-legend';
+            msg.textContent = `(数字较大，此处不绘制详细苹果图)`;
+            container.appendChild(msg);
+            return;
         }
 
-        const [n1El, op1El, n2El, op2El, n3El, ansInput, submitBtn, hintBtn, newProbBtn, feedbackEl, cCntEl, wCntEl, tCntEl, modeSelect, vfxCont, mathProbDispEl, examModal, hintModal, equalsSignEl, resultDisplayEl] = 
-            ['number1', 'operator1', 'number2', 'operator2', 'number3', 'answerInput', 'submitButton', 'hintButton', 'newProblemButton', 'feedback', 'correctCount', 'wrongCount', 'totalCount', 'modeSelect', 'vfxContainer', 'mathProblemDisplay', 'examModal', 'hintModal', 'equalsSign', 'resultDisplay'].map(id => getElementByIdSafe(id));
-        
-        const [examModalClose, hintModalClose, examModalTitle, hintModalTitle, hintModalSteps, hintVisuals] =
-            ['examModalClose', 'hintModalClose', 'examModalTitle', 'hintModalTitle', 'hintModalSteps', 'hintVisuals'].map(id => getElementByIdSafe(id));
-        
-        const examReportContent = getElementByIdSafe('examReportContent'); 
+        const wrapper = document.createElement('div');
+        wrapper.className = 'visual-container';
 
-        // --- 辅助函数 ---
-        function vfx() {
-            vfxCont.innerHTML = ''; 
-            for (let i = 0; i < 15; i++) {
-                const v = document.createElement('div');
-                v.className = 'correct-vfx'; v.textContent = '⭐'; 
-                const angle = Math.random() * 2 * Math.PI;
-                const distance = 80 + Math.random() * 50; 
-                v.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
-                v.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
-                v.style.transform = `translate(${(Math.random() - 0.5) * 20}px, ${(Math.random() - 0.5) * 20}px)`;
-                vfxCont.appendChild(v);
-                v.addEventListener('animationend', () => v.remove());
-            }
-        }
-        function wrongFlash() {
-            ansInput.classList.add('wrong-flash');
-            setTimeout(() => ansInput.classList.remove('wrong-flash'), 500);
-        }
-        
-        // --- Hint Styling Helpers ---
-        const numSpan = (num, className) => `<span class="${className}">${num}</span>`;
-        const opRedSpan = (op) => `<span class="op-red">${op}</span>`;
-        const numRedSpan = (num) => `<span class="num-red">${num}</span>`;
-        const parenRedSpan = (op) => `<span class="op-red">${op}</span>`;
-        const stepContent = (title, content) => `<strong>${title}</strong>${content}`; 
-        
-        // --- 可视化画图函数 (保持不变) ---
-        function renderVisualHelpers(container, n1, n2, op) {
-            container.innerHTML = ''; 
-            // **更新: 将最大画图数字从 30 更改为 20**
-            if (n1 > 20) {
-                 const msg = document.createElement('div');
-                 msg.className = 'visual-legend';
-                 msg.textContent = `(数字较大，此处不绘制详细苹果图)`;
-                 container.appendChild(msg);
-                 return; 
-            }
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'visual-container';
-            
-            const addItem = (type, isSubtracted = false) => {
-                const item = document.createElement('div');
-                item.className = 'visual-item';
-                item.textContent = type === 'A' ? '🍎' : '🍏';
-                if (isSubtracted) item.classList.add('is-subtracted');
-                return item;
-            };
-
-            if (op === '+') {
-                const total = n1 + n2;
-                for (let i = 0; i < total; i++) {
-                    wrapper.appendChild(addItem(i < n1 ? 'A' : 'B'));
-                }
-                 const legend = document.createElement('div');
-                legend.className = 'visual-legend';
-                legend.textContent = `🍎 ${n1} 个 + 🍏 ${n2} 个 = ${total} 个`;
-                wrapper.appendChild(legend);
-
-            } else { // 减法
-                for (let i = 0; i < n1; i++) {
-                    const isSubtracted = i >= (n1 - n2); 
-                    wrapper.appendChild(addItem('A', isSubtracted));
-                }
-                const legend = document.createElement('div');
-                legend.className = 'visual-legend';
-                legend.textContent = `共有 ${n1} 个 🍎，拿走 ${n2} 个，还剩 ${n1-n2} 个`;
-                wrapper.appendChild(legend);
-            }
-
-            container.appendChild(wrapper);
-        }
-
-        // **新增: 考试问题预生成函数**
-        function generateExamProblems() {
-            examProblems = [];
-            const maxAttemptsPerProblem = 10;
-            const generatorMap = {
-                'couShi': generateCouShi,
-                'jieShi': generateJieShi,
-                'noCarryAdd': generateNoCarryAdd,
-                'noBreakSub': generateNoBreakSub,
-                'continuous': generateContinuous,
-                'mixed': generateMixed // Fallback
-            };
-            
-            // 随机打乱题型顺序，确保考试顺序随机
-            const shuffledModes = [...EXAM_MODES_DISTRIBUTION].sort(() => Math.random() - 0.5);
-
-            for (let i = 0; i < EXAM_TOTAL_QUESTIONS; i++) {
-                let mode = shuffledModes[i];
-                let problem = null;
-                let attempts = 0;
-                let generatedSuccessfully = false;
-                
-                // 考试模式下，随机分配未知数 (?) 的位置 (20% 概率)
-                const allowUnknown = (Math.random() < 0.25) && (mode !== 'continuous');
-                
-                while (!generatedSuccessfully && attempts < maxAttemptsPerProblem) {
-                    attempts++;
-                    try {
-                        const generatorFn = generatorMap[mode];
-                        problem = generatorFn(maxNum, allowUnknown);
-                        // 确保答案和数字在 maxNum 范围内
-                        if (problem.answer >= 0 && problem.answer <= maxNum && 
-                            (problem.num3 === null || (problem.num3 !== null && problem.answer <= maxNum)) ) {
-                            generatedSuccessfully = true;
-                            problem.specificMode = mode;
-                        } else {
-                            throw new Error('Generated problem failed range check');
-                        }
-                    } catch (e) {
-                        problem = null;
-                    }
-                }
-                
-                // 如果特定题型生成失败，退回到混合简单题
-                if (!generatedSuccessfully) {
-                    problem = generateMixed(maxNum, false); 
-                    problem.specificMode = 'mixed-fallback';
-                }
-                
-                examProblems.push(problem);
-            }
-        }
-        
-        function switchMode(newMode) {
-            currentMode = newMode; 
-            isExamMode = newMode === 'exam';
-            
-            if (isExamMode) {
-                examCurrentQuestion = 0; examCorrectAnswers = 0; 
-                generateExamProblems(); // **NEW: 预生成考试题目**
-                correctCount = 0; wrongCount = 0;
-            } else if (modeSelect.value === 'exam') {
-                correctCount = 0; wrongCount = 0; totalCount = 0;
-            }
-
-            modeSelect.value = newMode; 
-            cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
-            newProbBtn.disabled = isExamMode; 
-            hintBtn.disabled = isExamMode; 
-            submitBtn.disabled = false;
-            generateProblem(true);
-            examModal.style.display = 'none';
-        }
-
-        // --- Core Generator Functions (A5 & A3 Implementation) ---
-        const rand = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
-        const modeRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        
-        // Helper to determine unknown position (n1 or n2)
-        function getUnknownProps(n1, n2, op1, maxNum, allowUnknown) {
-            const res = op1 === '+' ? n1 + n2 : n1 - n2;
-            let unknownPos = 'res';
-            if (allowUnknown && n1 > 5 && n2 > 5 && Math.random() < 0.4) {
-                if (Math.random() < 0.5) {
-                    unknownPos = 'n1'; // ? op B = C
-                } else {
-                    unknownPos = 'n2'; // A op ? = C
-                }
-            }
-            return { num1: n1, num2: n2, operator1: op1, answer: unknownPos === 'res' ? res : (unknownPos === 'n1' ? n1 : n2), unknownPosition: unknownPos };
-        }
-        
-        // Basic Add (A + B = C)
-        function generateBasicAdd(maxNum, allowUnknown) {
-            let n1 = rand(1, Math.min(maxNum - 1, 15));
-            let n2 = rand(1, maxNum - n1);
-            if (!allowUnknown) return { num1: n1, num2: n2, operator1: '+', answer: n1 + n2, unknownPosition: 'res' };
-            return getUnknownProps(n1, n2, '+', maxNum, allowUnknown);
-        }
-
-        // Basic Sub (A - B = C)
-        function generateBasicSub(maxNum, allowUnknown) {
-            let n1 = rand(10, maxNum);
-            let n2 = rand(1, n1 - 1);
-            if (!allowUnknown) return { num1: n1, num2: n2, operator1: '-', answer: n1 - n2, unknownPosition: 'res' };
-            return getUnknownProps(n1, n2, '-', maxNum, allowUnknown);
-        }
-
-        // Continuous Operation (A op B op C = D)
-        function generateContinuous(maxNum) {
-            const op1 = modeRandom(['+', '-']); 
-            const n1 = rand(10, maxNum - 5);
-            const n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
-            if (n2Range < 1) throw new Error('Retry continuous');
-            const n2 = rand(1, n2Range);
-            const iR = op1 === '+' ? n1 + n2 : n1 - n2;
-            
-            const op2 = modeRandom(['+', '-']);
-            let n3, res;
-            if (op2 === '+') { 
-                n3 = rand(1, maxNum - iR); res = iR + n3; 
-            } else { 
-                n3 = rand(1, iR); res = iR - n3; 
-            }
-            
-            if (res < 0 || res > maxNum) throw new Error('Retry continuous range');
-            return { num1: n1, num2: n2, operator1: op1, num3: n3, operator2: op2, answer: res, unknownPosition: 'res' };
-        }
-
-        // CouShi (A + B = C, where A+B > 10, A/B > 5)
-        function generateCouShi(maxNum, allowUnknown) {
-            let n1 = rand(7, Math.min(maxNum, 18)); // Big number
-            let need = 10 - (n1 % 10);
-            if (need <= 0 || need > 9) throw new Error('Retry CouShi need');
-            let n2 = need + rand(1, 9 - need); // Small number that forces carry
-            
-            if (n1 + n2 > maxNum || n1 < 6 || n2 < 1) throw new Error('Retry CouShi range');
-            
-            const res = n1 + n2;
-            let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
-            
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain CouShi property ((A%10) + (B%10) > 9)
-                if (Math.random() < 0.5) { // ? + B = C (n1)
-                    let n1_calc = res - n2;
-                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) <= 9) throw new Error('Retry CouShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A + ? = C (n2)
-                    let n2_calc = res - n1;
-                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) <= 9) throw new Error('Retry CouShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
-                }
-            }
-            return problem;
-        }
-
-        // JieShi (A - B = C, where A <= 20, B > A%10)
-        function generateJieShi(maxNum, allowUnknown) {
-            let n1;
-            // 修正: 排除 10, 20 (不破十) 确保必须使用借十法
-            do {
-                n1 = rand(11, Math.min(maxNum, 20)); // Max num is 20
-            } while (n1 % 10 === 0); 
-            
-            let uD = n1 % 10;
-            if (uD === 0) throw new Error('Retry JieShi uD');
-            
-            // n2 必须是单数且大于 n1 的个位数 (强制破十)
-            let n2 = rand(uD + 1, 9); 
-            
-            if (n1 - n2 < 1) throw new Error('Retry JieShi res');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
-
-            if (allowUnknown && Math.random() < 0.4) {
-                 // Unknown must maintain JieShi property (B%10 > A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n1_calc <= 10 || n2 > n1_calc % 10) throw new Error('Retry JieShi n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry JieShi n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
-                }
-            }
-            return problem;
-        }
-
-        // PingShi (A - B = C, where A > 20, B > A%10) - Since maxNum=20, this mode is currently disabled in practice.
-        function generatePingShi(maxNum, allowUnknown) {
-            // Keep original logic, but it will fail generation when maxNum=20 as rand(21, 20) is invalid.
-             do {
-                n1 = rand(21, Math.min(maxNum, 30));
-            } while (n1 % 10 === 0 || n1 % 10 === 9); 
-            throw new Error('PingShi disabled for maxNum <= 20');
-        }
-
-        // NoBreakSub (A - B = C, where A > 10, B%10 <= A%10)
-        function generateNoBreakSub(maxNum, allowUnknown) {
-            let n1 = rand(11, maxNum);
-            let u1_ = n1 % 10;
-            
-            let maxN2Unit = u1_;
-            let n2Unit = rand(0, maxN2Unit);
-            
-            let n2Ten = rand(0, Math.floor(n1 / 10) - 1);
-            let n2 = n2Ten * 10 + n2Unit;
-
-            if (n2 < 1 || n2 >= n1) throw new Error('Retry NoBreakSub size');
-            
-            const res = n1 - n2;
-            let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
-
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain NoBreakSub property (B%10 <= A%10)
-                if (Math.random() < 0.5) { // ? - B = C (n1)
-                    let n1_calc = res + n2;
-                    if (n1_calc > maxNum || n2 % 10 > n1_calc % 10) throw new Error('Retry NoBreakSub n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A - ? = C (n2)
-                    let n2_calc = n1 - res;
-                    if (n2_calc < 1 || n2_calc % 10 > n1 % 10) throw new Error('Retry NoBreakSub n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
-                }
-            }
-            return problem;
-        }
-
-        // NoCarryAdd (A + B = C, where A%10 + B%10 <= 9)
-        function generateNoCarryAdd(maxNum, allowUnknown) {
-            let n1 = rand(10, Math.min(maxNum - 1, 15)); // Keep n1 reasonable for smaller maxNum
-            let u1_ = n1 % 10;
-            
-            let maxN2Unit = 9 - u1_;
-            let n2Unit = rand(0, maxN2Unit);
-            
-            let maxN2Ten = Math.floor((maxNum - n1) / 10);
-            let n2Ten = rand(0, maxN2Ten) * 10;
-            
-            let n2 = n2Ten + n2Unit;
-            if (n2 < 1) n2 = 1; 
-            if (n1 + n2 > maxNum) throw new Error('Retry NoCarryAdd range');
-            
-            const res = n1 + n2;
-            let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
-
-            if (allowUnknown && Math.random() < 0.4) {
-                // Unknown must maintain NoCarryAdd property (A%10 + B%10 <= 9)
-                if (Math.random() < 0.5) { // ? + B = C (n1)
-                    let n1_calc = res - n2;
-                    if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) > 9) throw new Error('Retry NoCarryAdd n1 calc');
-                    problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
-                } else { // A + ? = C (n2)
-                    let n2_calc = res - n1;
-                    if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) > 9) throw new Error('Retry NoCarryAdd n2 calc');
-                    problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
-                }
-            }
-            return problem;
-        }
-        
-        // Mixed mode: picks a sub-generator
-        function generateMixed(maxNum, allowUnknown) {
-            const subModes = ['couShi', 'jieShi', 'noBreakSub', 'noCarryAdd', 'basicAdd', 'basicSub'];
-            let mode;
-            let problem;
-            
-            for (let i = 0; i < 10; i++) {
-                 try {
-                     mode = modeRandom(subModes);
-                     if (mode === 'basicAdd') problem = generateBasicAdd(maxNum, allowUnknown);
-                     else if (mode === 'basicSub') problem = generateBasicSub(maxNum, allowUnknown);
-                     else if (mode === 'couShi') problem = generateCouShi(maxNum, allowUnknown);
-                     else if (mode === 'jieShi') problem = generateJieShi(maxNum, allowUnknown);
-                     else if (mode === 'noBreakSub') problem = generateNoBreakSub(maxNum, allowUnknown);
-                     else if (mode === 'noCarryAdd') problem = generateNoCarryAdd(maxNum, allowUnknown);
-                     
-                     // Final validation
-                     if (problem && problem.answer >= 0 && problem.answer <= maxNum && (problem.num3 === null || problem.answer <= maxNum)) {
-                         problem.specificMode = mode;
-                         return problem;
-                     } else {
-                         throw new Error('Mixed problem failed range check');
-                     }
-                 } catch (e) {
-                     // Ignore and try again
-                 }
-            }
-            return generateBasicAdd(maxNum, allowUnknown); // Final fallback
-        }
-        
-        // Tie to a specific generator for non-mixed/exam modes
-        const getGenerator = (mode) => {
-            if (mode === 'add') return generateBasicAdd;
-            if (mode === 'sub') return generateBasicSub;
-            if (mode === 'continuous') return generateContinuous;
-            if (mode === 'couShi') return generateCouShi;
-            if (mode === 'jieShi') return generateJieShi;
-            if (mode === 'pingShi') return generatePingShi;
-            if (mode === 'noBreakSub') return generateNoBreakSub;
-            if (mode === 'noCarryAdd') return generateNoCarryAdd;
-            return generateMixed; // Fallback
+        const addItem = (type, isSubtracted = false) => {
+            const item = document.createElement('div');
+            item.className = 'visual-item';
+            item.textContent = type === 'A' ? '🍎' : '🍏';
+            if (isSubtracted) item.classList.add('is-subtracted');
+            return item;
         };
-        
-        function generateProblem(shouldFocus = false) { 
-            let attempts = 0; let generatedSuccessfully = false; 
-            
-            const clearDisplay = () => {
-                n1El.textContent = ''; op1El.textContent = ''; n2El.textContent = ''; 
-                op2El.textContent = ''; n3El.textContent = ''; equalsSignEl.textContent = '';
-                resultDisplayEl.textContent = ''; mathProbDispEl.classList.remove('three-op'); 
-            };
-            clearDisplay();
 
-            if (isExamMode) {
-                // **更新: 考试模式直接从预生成列表获取问题**
-                if (examCurrentQuestion >= EXAM_TOTAL_QUESTIONS) return;
-                currentProblem = examProblems[examCurrentQuestion];
-                generatedSuccessfully = true;
-                submitBtn.disabled = false;
-                hintBtn.disabled = true; // 考试禁用提示
-                newProbBtn.disabled = true; // 考试禁用换题
-            } else {
-                // 标准练习模式的生成逻辑 (保持不变)
-                if (isExamMode) submitBtn.disabled = false;
-                
-                const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
-                let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
-                const generatorFn = getGenerator(generatorMode);
-                
+        if (op === '+') {
+            const total = n1 + n2;
+            for (let i = 0; i < total; i++) {
+                wrapper.appendChild(addItem(i < n1 ? 'A' : 'B'));
+            }
+            const legend = document.createElement('div');
+            legend.className = 'visual-legend';
+            legend.textContent = `🍎 ${n1} 个 + 🍏 ${n2} 个 = ${total} 个`;
+            wrapper.appendChild(legend);
+
+        } else { // 减法
+            for (let i = 0; i < n1; i++) {
+                const isSubtracted = i >= (n1 - n2);
+                wrapper.appendChild(addItem('A', isSubtracted));
+            }
+            const legend = document.createElement('div');
+            legend.className = 'visual-legend';
+            legend.textContent = `共有 ${n1} 个 🍎，拿走 ${n2} 个，还剩 ${n1-n2} 个`;
+            wrapper.appendChild(legend);
+        }
+
+        container.appendChild(wrapper);
+    }
+
+    // **新增: 考试问题预生成函数**
+    function generateExamProblems() {
+        examProblems = [];
+        const maxAttemptsPerProblem = 10;
+        const generatorMap = {
+            'couShi': generateCouShi,
+            'jieShi': generateJieShi,
+            'noCarryAdd': generateNoCarryAdd,
+            'noBreakSub': generateNoBreakSub,
+            'continuous': generateContinuous,
+            'mixed': generateMixed // Fallback
+        };
+
+        // 随机打乱题型顺序，确保考试顺序随机
+        const shuffledModes = [...EXAM_MODES_DISTRIBUTION].sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < EXAM_TOTAL_QUESTIONS; i++) {
+            let mode = shuffledModes[i];
+            let problem = null;
+            let attempts = 0;
+            let generatedSuccessfully = false;
+
+            // 考试模式下，随机分配未知数 (?) 的位置 (20% 概率)
+            const allowUnknown = (Math.random() < 0.25) && (mode !== 'continuous');
+
+            while (!generatedSuccessfully && attempts < maxAttemptsPerProblem) {
+                attempts++;
                 try {
-                    while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
-                        attempts++; 
-                        currentProblem = generatorFn(maxNum, allowUnknown);
-                        currentProblem.specificMode = generatorMode;
-                        
-                        if (currentProblem.num3 !== null && currentProblem.num3 !== undefined) {
-                             mathProbDispEl.classList.add('three-op');
-                        } else {
-                             mathProbDispEl.classList.remove('three-op');
-                        }
-                        
-                        if (currentProblem.num1 !== null && currentProblem.num2 !== null && currentProblem.answer !== null && currentProblem.answer >= 0 && (currentProblem.num3 === null || currentProblem.answer <= maxNum)) {
-                             generatedSuccessfully = true;
-                        } else {
-                             throw new Error('Problem properties invalid or out of range');
-                        }
-                    } 
-
-                    if (!generatedSuccessfully) { 
-                        throw new Error('Max attempts reached'); 
+                    const generatorFn = generatorMap[mode];
+                    problem = generatorFn(maxNum, allowUnknown);
+                    // 确保答案和数字在 maxNum 范围内
+                    if (problem.answer >= 0 && problem.answer <= maxNum &&
+                        (problem.num3 === null || (problem.num3 !== null && problem.answer <= maxNum)) ) {
+                        generatedSuccessfully = true;
+                        problem.specificMode = mode;
+                    } else {
+                        throw new Error('Generated problem failed range check');
                     }
-                
-                } catch (error) {
-                    currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode }; 
+                } catch (e) {
+                    problem = null;
                 }
             }
 
+            // 如果特定题型生成失败，退回到混合简单题
+            if (!generatedSuccessfully) {
+                problem = generateMixed(maxNum, false);
+                problem.specificMode = 'mixed-fallback';
+            }
 
-            const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = currentProblem;
-            
-            // --- Display Logic (Unified and updated for n1) ---
-            let n1_display = num1, n2_display = num2, result_display;
-            
-            if (num3 !== null && num3 !== undefined) {
-                result_display = '?';
-            } else if (unknownPosition === 'res') {
-                result_display = '?';
+            examProblems.push(problem);
+        }
+    }
+
+    function switchMode(newMode) {
+        currentMode = newMode;
+        isExamMode = newMode === 'exam';
+
+        if (isExamMode) {
+            examCurrentQuestion = 0; examCorrectAnswers = 0;
+            generateExamProblems(); // **NEW: 预生成考试题目**
+            correctCount = 0; wrongCount = 0;
+        } else if (modeSelect.value === 'exam') {
+            correctCount = 0; wrongCount = 0; totalCount = 0;
+        }
+
+        modeSelect.value = newMode;
+        cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
+        newProbBtn.disabled = isExamMode;
+        hintBtn.disabled = isExamMode;
+        submitBtn.disabled = false;
+        generateProblem(true);
+        examModal.style.display = 'none';
+    }
+
+    // --- Core Generator Functions (A5 & A3 Implementation) ---
+    const rand = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+    const modeRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // Helper to determine unknown position (n1 or n2)
+    function getUnknownProps(n1, n2, op1, maxNum, allowUnknown) {
+        const res = op1 === '+' ? n1 + n2 : n1 - n2;
+        let unknownPos = 'res';
+        if (allowUnknown && n1 > 5 && n2 > 5 && Math.random() < 0.4) {
+            if (Math.random() < 0.5) {
+                unknownPos = 'n1'; // ? op B = C
             } else {
-                const resultC = num1 + (operator1 === '+' ? num2 : -num2);
-                result_display = resultC;
-                if (unknownPosition === 'n1') {
-                    n1_display = '?';
-                } else if (unknownPosition === 'n2') {
-                    n2_display = '?';
+                unknownPos = 'n2'; // A op ? = C
+            }
+        }
+        return { num1: n1, num2: n2, operator1: op1, answer: unknownPos === 'res' ? res : (unknownPos === 'n1' ? n1 : n2), unknownPosition: unknownPos };
+    }
+
+    // Basic Add (A + B = C)
+    function generateBasicAdd(maxNum, allowUnknown) {
+        let n1 = rand(1, Math.min(maxNum - 1, 15));
+        let n2 = rand(1, maxNum - n1);
+        if (!allowUnknown) return { num1: n1, num2: n2, operator1: '+', answer: n1 + n2, unknownPosition: 'res' };
+        return getUnknownProps(n1, n2, '+', maxNum, allowUnknown);
+    }
+
+    // Basic Sub (A - B = C)
+    function generateBasicSub(maxNum, allowUnknown) {
+        let n1 = rand(10, maxNum);
+        let n2 = rand(1, n1 - 1);
+        if (!allowUnknown) return { num1: n1, num2: n2, operator1: '-', answer: n1 - n2, unknownPosition: 'res' };
+        return getUnknownProps(n1, n2, '-', maxNum, allowUnknown);
+    }
+
+    // Continuous Operation (A op B op C = D)
+    function generateContinuous(maxNum) {
+        const op1 = modeRandom(['+', '-']);
+        const n1 = rand(10, maxNum - 5);
+        const n2Range = op1 === '+' ? (maxNum - n1) : (n1 - 1);
+        if (n2Range < 1) throw new Error('Retry continuous');
+        const n2 = rand(1, n2Range);
+        const iR = op1 === '+' ? n1 + n2 : n1 - n2;
+
+        const op2 = modeRandom(['+', '-']);
+        let n3, res;
+        if (op2 === '+') {
+            n3 = rand(1, maxNum - iR); res = iR + n3;
+        } else {
+            n3 = rand(1, iR); res = iR - n3;
+        }
+
+        if (res < 0 || res > maxNum) throw new Error('Retry continuous range');
+        return { num1: n1, num2: n2, operator1: op1, num3: n3, operator2: op2, answer: res, unknownPosition: 'res' };
+    }
+
+    // CouShi (A + B = C, where A+B > 10, A/B > 5)
+    function generateCouShi(maxNum, allowUnknown) {
+        let n1 = rand(7, Math.min(maxNum, 18)); // Big number
+        let need = 10 - (n1 % 10);
+        if (need <= 0 || need > 9) throw new Error('Retry CouShi need');
+        let n2 = need + rand(1, 9 - need); // Small number that forces carry
+
+        if (n1 + n2 > maxNum || n1 < 6 || n2 < 1) throw new Error('Retry CouShi range');
+
+        const res = n1 + n2;
+        let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
+
+        if (allowUnknown && Math.random() < 0.4) {
+            // Unknown must maintain CouShi property ((A%10) + (B%10) > 9)
+            if (Math.random() < 0.5) { // ? + B = C (n1)
+                let n1_calc = res - n2;
+                if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) <= 9) throw new Error('Retry CouShi n1 calc');
+                problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
+            } else { // A + ? = C (n2)
+                let n2_calc = res - n1;
+                if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) <= 9) throw new Error('Retry CouShi n2 calc');
+                problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            }
+        }
+        return problem;
+    }
+
+    // JieShi (A - B = C, where A <= 20, B > A%10)
+    function generateJieShi(maxNum, allowUnknown) {
+        let n1;
+        // 修正: 排除 10, 20 (不破十) 确保必须使用借十法
+        do {
+            n1 = rand(11, Math.min(maxNum, 20)); // Max num is 20
+        } while (n1 % 10 === 0);
+
+        let uD = n1 % 10;
+        if (uD === 0) throw new Error('Retry JieShi uD');
+
+        // n2 必须是单数且大于 n1 的个位数 (强制破十)
+        let n2 = rand(uD + 1, 9);
+
+        if (n1 - n2 < 1) throw new Error('Retry JieShi res');
+
+        const res = n1 - n2;
+        let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+
+        if (allowUnknown && Math.random() < 0.4) {
+            // Unknown must maintain JieShi property (B%10 > A%10)
+            if (Math.random() < 0.5) { // ? - B = C (n1)
+                let n1_calc = res + n2;
+                if (n1_calc > maxNum || n1_calc <= 10 || n2 > n1_calc % 10) throw new Error('Retry JieShi n1 calc');
+                problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
+            } else { // A - ? = C (n2)
+                let n2_calc = n1 - res;
+                if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry JieShi n2 calc');
+                problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            }
+        }
+        return problem;
+    }
+
+    // JieShi (A - B = C, where A <= 20, B > A%10)
+    function generatePingShi(maxNum, allowUnknown) {
+        let n1;
+        // 修正: 排除 10, 20 (不破十) 确保必须使用借十法
+        do {
+            n1 = rand(11, Math.min(maxNum, 20)); // Max num is 20
+        } while (n1 % 10 === 0);
+
+        let uD = n1 % 10;
+        if (uD === 0) throw new Error('Retry JieShi uD');
+
+        // n2 必须是单数且大于 n1 的个位数 (强制破十)
+        let n2 = rand(uD + 1, 9);
+
+        if (n1 - n2 < 1) throw new Error('Retry JieShi res');
+
+        const res = n1 - n2;
+        let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+
+        if (allowUnknown && Math.random() < 0.4) {
+            // Unknown must maintain JieShi property (B%10 > A%10)
+            if (Math.random() < 0.5) { // ? - B = C (n1)
+                let n1_calc = res + n2;
+                if (n1_calc > maxNum || n1_calc <= 10 || n2 > n1_calc % 10) throw new Error('Retry JieShi n1 calc');
+                problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
+            } else { // A - ? = C (n2)
+                let n2_calc = n1 - res;
+                if (n2_calc < 1 || n2_calc % 10 <= n1 % 10) throw new Error('Retry JieShi n2 calc');
+                problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            }
+        }
+        return problem;
+    }
+
+    // NoBreakSub (A - B = C, where A > 10, B%10 <= A%10)
+    function generateNoBreakSub(maxNum, allowUnknown) {
+        let n1 = rand(11, maxNum);
+        let u1_ = n1 % 10;
+
+        let maxN2Unit = u1_;
+        let n2Unit = rand(0, maxN2Unit);
+
+        let n2Ten = rand(0, Math.floor(n1 / 10) - 1);
+        let n2 = n2Ten * 10 + n2Unit;
+
+        if (n2 < 1 || n2 >= n1) throw new Error('Retry NoBreakSub size');
+
+        const res = n1 - n2;
+        let problem = { num1: n1, num2: n2, operator1: '-', answer: res, unknownPosition: 'res' };
+
+        if (allowUnknown && Math.random() < 0.4) {
+            // Unknown must maintain NoBreakSub property (B%10 <= A%10)
+            if (Math.random() < 0.5) { // ? - B = C (n1)
+                let n1_calc = res + n2;
+                if (n1_calc > maxNum || n2 % 10 > n1_calc % 10) throw new Error('Retry NoBreakSub n1 calc');
+                problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
+            } else { // A - ? = C (n2)
+                let n2_calc = n1 - res;
+                if (n2_calc < 1 || n2_calc % 10 > n1 % 10) throw new Error('Retry NoBreakSub n2 calc');
+                problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            }
+        }
+        return problem;
+    }
+
+    // NoCarryAdd (A + B = C, where A%10 + B%10 <= 9)
+    function generateNoCarryAdd(maxNum, allowUnknown) {
+        let n1 = rand(10, Math.min(maxNum - 1, 15)); // Keep n1 reasonable for smaller maxNum
+        let u1_ = n1 % 10;
+
+        let maxN2Unit = 9 - u1_;
+        let n2Unit = rand(0, maxN2Unit);
+
+        let maxN2Ten = Math.floor((maxNum - n1) / 10);
+        let n2Ten = rand(0, maxN2Ten) * 10;
+
+        let n2 = n2Ten + n2Unit;
+        if (n2 < 1) n2 = 1;
+        if (n1 + n2 > maxNum) throw new Error('Retry NoCarryAdd range');
+
+        const res = n1 + n2;
+        let problem = { num1: n1, num2: n2, operator1: '+', answer: res, unknownPosition: 'res' };
+
+        if (allowUnknown && Math.random() < 0.4) {
+            // Unknown must maintain NoCarryAdd property (A%10 + B%10 <= 9)
+            if (Math.random() < 0.5) { // ? + B = C (n1)
+                let n1_calc = res - n2;
+                if (n1_calc < 1 || (n1_calc % 10) + (n2 % 10) > 9) throw new Error('Retry NoCarryAdd n1 calc');
+                problem = { ...problem, num1: n1_calc, answer: n1_calc, unknownPosition: 'n1' };
+            } else { // A + ? = C (n2)
+                let n2_calc = res - n1;
+                if (n2_calc < 1 || (n1 % 10) + (n2_calc % 10) > 9) throw new Error('Retry NoCarryAdd n2 calc');
+                problem = { ...problem, answer: n2_calc, unknownPosition: 'n2' };
+            }
+        }
+        return problem;
+    }
+
+    // Mixed mode: picks a sub-generator
+    function generateMixed(maxNum, allowUnknown) {
+        const subModes = ['couShi', 'jieShi', 'noBreakSub', 'noCarryAdd', 'basicAdd', 'basicSub'];
+        let mode;
+        let problem;
+
+        for (let i = 0; i < 10; i++) {
+            try {
+                mode = modeRandom(subModes);
+                if (mode === 'basicAdd') problem = generateBasicAdd(maxNum, allowUnknown);
+                else if (mode === 'basicSub') problem = generateBasicSub(maxNum, allowUnknown);
+                else if (mode === 'couShi') problem = generateCouShi(maxNum, allowUnknown);
+                else if (mode === 'jieShi') problem = generateJieShi(maxNum, allowUnknown);
+                else if (mode === 'noBreakSub') problem = generateNoBreakSub(maxNum, allowUnknown);
+                else if (mode === 'noCarryAdd') problem = generateNoCarryAdd(maxNum, allowUnknown);
+
+                // Final validation
+                if (problem && problem.answer >= 0 && problem.answer <= maxNum && (problem.num3 === null || problem.answer <= maxNum)) {
+                    problem.specificMode = mode;
+                    return problem;
+                } else {
+                    throw new Error('Mixed problem failed range check');
                 }
-            }
-            
-            n1El.textContent = n1_display; op1El.textContent = operator1; n2El.textContent = n2_display; 
-            if (num3 !== null && num3 !== undefined) {
-                op2El.textContent = operator2; n3El.textContent = num3;
-            } else { 
-                op2El.textContent = ''; n3El.textContent = '';
-            }
-            equalsSignEl.textContent = '='; 
-            resultDisplayEl.textContent = result_display;
-
-            ansInput.value = ''; if (shouldFocus) ansInput.focus();
-            
-            // **修改点：移除考试进度中的题型信息**
-            if (isExamMode) { 
-                feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`; 
-            } 
-            else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) { 
-                feedbackEl.textContent = ''; 
+            } catch (e) {
+                // Ignore and try again
             }
         }
-        
-        // --- 提示步骤逻辑 (保持不变) ---
+        return generateBasicAdd(maxNum, allowUnknown); // Final fallback
+    }
 
-        // 基础计算步骤
-        function getBasicSteps(n1, n2, op, res, titleOverride = '基础加减法') {
-             const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
-             const t = `${titleOverride} (直接计算)`; 
-             const s = `<div class="modal-step">${stepContent('步骤 1: 直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
-             const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
-             return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
-        
-        // 同位相加法 (不进位) 步骤
-        function getNoCarryAddSteps(n1, n2, res) {
-            const u1 = n1 % 10, u2 = n2 % 10, t1 = Math.floor(n1 / 10), t2 = Math.floor(n2 / 10); 
-            const uSum = u1 + u2;
-            const tRes = t1 + t2; 
-            const [t1Span, t2Span] = [numSpan(t1, 'highlight-remain'), numSpan(t2, 'highlight-remain')];
-            const [u1Span, u2Span] = [numSpan(u1, 'highlight-ten'), numSpan(u2, 'highlight-ten')];
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
-            
-            let t = '➕ 同位相加法 (不进位)';
-            let s = `<div class="modal-step">${stepContent('步骤 1: 个位加个位', `：💪 个位上的 ${u1Span} 加上 ${u2Span}，得到 ${numSpan(uSum, 'highlight-goal')}。`)}</div>`;
-            if (t1 > 0 || t2 > 0) { 
-                s += `<div class="modal-step">${stepContent('步骤 2: 十位加十位', `：🧠 十位上的 ${t1Span} 加上 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
-            }
-            const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
-            return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
+    // Tie to a specific generator for non-mixed/exam modes
+    const getGenerator = (mode) => {
+        if (mode === 'add') return generateBasicAdd;
+        if (mode === 'sub') return generateBasicSub;
+        if (mode === 'continuous') return generateContinuous;
+        if (mode === 'couShi') return generateCouShi;
+        if (mode === 'jieShi') return generateJieShi;
+        if (mode === 'pingShi') return generatePingShi;
+        if (mode === 'noBreakSub') return generateNoBreakSub;
+        if (mode === 'noCarryAdd') return generateNoCarryAdd;
+        return generateMixed; // Fallback
+    };
 
-        // 凑十法步骤
-        function getCouShiSteps(n1, n2, res) {
-            const big = Math.max(n1, n2); const small = Math.min(n1, n2);
-            const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
-            const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
-            const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
-            const nextTen = big + need, nextTenSpan = numSpan(nextTen, 'highlight-goal');
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+    function generateProblem(shouldFocus = false) {
+        let attempts = 0; let generatedSuccessfully = false;
 
-            const t = '✨ 凑十法魔法拆分';
-            let s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${need} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 2: 小数拆分', `：✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 3: 魔法合体', `：🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
-            const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
-            return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
+        const clearDisplay = () => {
+            n1El.textContent = ''; op1El.textContent = ''; n2El.textContent = '';
+            op2El.textContent = ''; n3El.textContent = ''; equalsSignEl.textContent = '';
+            resultDisplayEl.textContent = ''; mathProbDispEl.classList.remove('three-op');
+        };
+        clearDisplay();
 
-        // 同位相减法 (不破十) 步骤
-        function getNoBreakSubSteps(n1, n2, res) {
-            const u1 = n1 % 10, u2 = n2 % 10;
-            const t1 = Math.floor(n1 / 10), t2 = Math.floor(n2 / 10); 
-            const tRes = t1 - t2; const uRes = u1 - u2; 
-            const [t1Span, t2Span] = [numSpan(t1, 'highlight-remain'), numSpan(t2, 'highlight-remain')];
-            const [u1Span, u2Span] = [numSpan(u1, 'highlight-ten'), numSpan(u2, 'highlight-ten')];
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+        if (isExamMode) {
+            // **更新: 考试模式直接从预生成列表获取问题**
+            if (examCurrentQuestion >= EXAM_TOTAL_QUESTIONS) return;
+            currentProblem = examProblems[examCurrentQuestion];
+            generatedSuccessfully = true;
+            submitBtn.disabled = false;
+            hintBtn.disabled = true; // 考试禁用提示
+            newProbBtn.disabled = true; // 考试禁用换题
+        } else {
+            // 标准练习模式的生成逻辑 (保持不变)
+            if (isExamMode) submitBtn.disabled = false;
 
-            let t = '✅ 同位相减法 (不破十)';
-            let s = `<div class="modal-step">${stepContent('步骤 1: 个位减个位', `：💪 个位上的 ${u1Span} 减去 ${u2Span}，得到 ${numSpan(uRes, 'highlight-goal')}。`)}</div>`;
-            if (t2 > 0) { 
-                s += `<div class="modal-step">${stepContent('步骤 2: 十位减十位', `：🧠 十位上的 ${t1Span} 减去 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
-            } else if (t1 > 0 && t2 === 0) { 
-                s += `<div class="modal-step">${stepContent('步骤 2: 保留十位', `：🧠 减数没有十位，保留 ${t1Span} (1个十)。`)}</div>`;
-            }
-            const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
-            return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
+            const allowUnknown = !isExamMode && !['exam', 'continuous'].includes(modeSelect.value);
+            let generatorMode = isExamMode ? 'mixed' : modeSelect.value;
+            const generatorFn = getGenerator(generatorMode);
 
-        // 借十法 (破十法, 20以内) 步骤
-        function getJieShiSteps(n1, n2, res) {
-            const u1 = n1 % 10;
-            const tMinusN2 = 10 - n2;
-            const [u1Span, tMinusN2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal')];
-            const tSpan = numSpan(10, 'highlight-goal'); 
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+            try {
+                while (!generatedSuccessfully && attempts < MAX_GENERATION_ATTEMPTS) {
+                    attempts++;
+                    currentProblem = generatorFn(maxNum, allowUnknown);
+                    currentProblem.specificMode = generatorMode;
 
-            let t = '⚡ 借十法 (破十法)';
-            let s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
-            const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${tSpan} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
-            return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
-
-        // 平十法 (连减法, 20以上破十) 步骤
-        function getPingShiSteps(n1, n2, res) {
-            const u1 = n1 % 10;
-            const rem = n2 - u1; 
-            const tenRem = n1 - u1; 
-            const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
-            const [remSpan, tenRemSpan] = [numSpan(rem, 'highlight-remain'), numSpan(tenRem, 'highlight-goal')];
-            const u1Span = numSpan(u1, 'highlight-ten');
-            
-            let t = '📏 平十法 (连减法)';
-            let s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
-            s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
-            const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
-            return { title: t, stepsHTML: s, formula: formulaHTML };
-        }
-        
-        // Function to determine the best subtraction method for a hint
-        function getSubtractionMethod(n1, n2) {
-            const res = n1 - n2;
-            const u1 = n1 % 10, u2 = n2 % 10;
-            const isBreakTen = n1 > 10 && u2 > u1; 
-            const isNoBreakSub = n1 > 10 && u2 <= u1; 
-            const isSimpleSub = n1 <= 10 || (n1 > 10 && (n2 % 10 === 0 || res % 10 === 0));
-
-            if (isSimpleSub) return { mode: 'basic', func: (a, b, r) => getBasicSteps(a, b, '-', r, '基础减法') };
-            if (isNoBreakSub) return { mode: 'noBreakSub', func: getNoBreakSubSteps };
-            // 由于 maxNum=20, 这里只可能是 JieShi
-            if (isBreakTen && n1 <= 20) return { mode: 'jieShi', func: getJieShiSteps }; 
-            if (isBreakTen) return { mode: 'pingShi', func: getPingShiSteps }; 
-            
-            return { mode: 'basic', func: (a, b, r) => getBasicSteps(a, b, '-', r, '基础减法') };
-        }
-
-        // 提示逻辑总调度
-        function getSingleOpHintSteps(n1, n2, op, forcedMode = null, unknownPos = 'res') {
-            const res = op === '+' ? n1 + n2 : n1 - n2; 
-            const effectiveMode = forcedMode || currentProblem.specificMode;
-            
-            let t = '', s = '', formulaHTML = '';
-            let calculationDetails = {};
-            
-            // --- 1. 求解未知数逻辑 (? op B = C) 或 (A op ? = C) ---
-            if (unknownPos === 'n1' || unknownPos === 'n2') {
-                const n1Known = unknownPos === 'n2' ? n1 : n2; // The known non-result number (A or B)
-                const n2Answer = unknownPos === 'n2' ? n2 : n1; // The calculated unknown number (?=A or ?=B)
-                const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer); // C (the result displayed)
-                
-                let subN1, subN2, conversionText, conversionOp = '-'; 
-
-                if (op === '-') {
-                    if (unknownPos === 'n1') { // ? - B = C -> ? = C + B (加法)
-                         subN1 = knownResult; subN2 = n1Known; conversionOp = '+';
-                         t = '🧮 求解未知被减数 (? = C + B)';
-                         conversionText = `：🔍 未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
-                         
-                         const u1 = subN1 % 10, u2 = subN2 % 10;
-                         const isCouShi = u1 + u2 > 9; 
-                         const addFunc = isCouShi ? getCouShiSteps : getNoCarryAddSteps;
-                         calculationDetails = addFunc(subN1, subN2, n2Answer);
-
-                    } else { // unknownPos === 'n2', A - ? = C -> ? = A - C (减法)
-                         subN1 = n1; subN2 = knownResult; 
-                         t = '🧮 求解未知减数 (? = A - C)';
-                         conversionText = `：🔍 ${numRedSpan(n1)} 减去未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(n1)} **减去** ${numRedSpan(knownResult)}。`;
-                         const { func: subFunc } = getSubtractionMethod(subN1, subN2);
-                         calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
+                    if (currentProblem.num3 !== null && currentProblem.num3 !== undefined) {
+                        mathProbDispEl.classList.add('three-op');
+                    } else {
+                        mathProbDispEl.classList.remove('three-op');
                     }
-                } else if (op === '+') {
-                    // ? + B = C OR A + ? = C -> ? = C - B OR ? = C - A (减法)
-                    subN1 = knownResult; subN2 = n1Known; 
-                    if (unknownPos === 'n1') {
-                         t = '🧮 求解未知加数 (? = C - B)';
-                         conversionText = `：🔍 未知数 (?) 加上 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
-                    } else { // unknownPos === 'n2'
-                         t = '🧮 求解未知加数 (? = C - A)';
-                         conversionText = `：🔍 ${numRedSpan(n1Known)} 加上未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
+
+                    if (currentProblem.num1 !== null && currentProblem.num2 !== null && currentProblem.answer !== null && currentProblem.answer >= 0 && (currentProblem.num3 === null || currentProblem.answer <= maxNum)) {
+                        generatedSuccessfully = true;
+                    } else {
+                        throw new Error('Problem properties invalid or out of range');
                     }
+                }
+
+                if (!generatedSuccessfully) {
+                    throw new Error('Max attempts reached');
+                }
+
+            } catch (error) {
+                currentProblem = { num1: 15, num2: 8, operator1: '-', num3: null, operator2: null, answer: 7, unknownPosition: 'res', specificMode: generatorMode };
+            }
+        }
+
+
+        const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = currentProblem;
+
+        // --- Display Logic (Unified and updated for n1) ---
+        let n1_display = num1, n2_display = num2, result_display;
+
+        if (num3 !== null && num3 !== undefined) {
+            result_display = '?';
+        } else if (unknownPosition === 'res') {
+            result_display = '?';
+        } else {
+            const resultC = num1 + (operator1 === '+' ? num2 : -num2);
+            result_display = resultC;
+            if (unknownPosition === 'n1') {
+                n1_display = '?';
+            } else if (unknownPosition === 'n2') {
+                n2_display = '?';
+            }
+        }
+
+        n1El.textContent = n1_display; op1El.textContent = operator1; n2El.textContent = n2_display;
+        if (num3 !== null && num3 !== undefined) {
+            op2El.textContent = operator2; n3El.textContent = num3;
+        } else {
+            op2El.textContent = ''; n3El.textContent = '';
+        }
+        equalsSignEl.textContent = '=';
+        resultDisplayEl.textContent = result_display;
+
+        ansInput.value = ''; if (shouldFocus) ansInput.focus();
+
+        // **修改点：移除考试进度中的题型信息**
+        if (isExamMode) {
+            feedbackEl.textContent = `考试进度: 第 ${examCurrentQuestion + 1} / ${EXAM_TOTAL_QUESTIONS} 题`;
+        }
+        else if (!feedbackEl.textContent.includes('回答正确') && !feedbackEl.textContent.includes('错了')) {
+            feedbackEl.textContent = '';
+        }
+    }
+
+    // --- 提示步骤逻辑 (保持不变) ---
+
+    // 基础计算步骤
+    function getBasicSteps(n1, n2, op, res, titleOverride = '基础加减法') {
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+        const t = `${titleOverride} (直接计算)`;
+        const s = `<div class="modal-step">${stepContent('步骤 1: 直接计算', `：${numSpan(n1, 'highlight-remain')} ${opRedSpan(op)} ${numSpan(n2, 'highlight-remain')} ${opRedSpan('=')} ${numSpan(res, 'highlight-goal')} 就可以啦！`)}</div>`;
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan(op)} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // 同位相加法 (不进位) 步骤
+    function getNoCarryAddSteps(n1, n2, res) {
+        const u1 = n1 % 10, u2 = n2 % 10, t1 = Math.floor(n1 / 10), t2 = Math.floor(n2 / 10);
+        const uSum = u1 + u2;
+        const tRes = t1 + t2;
+        const [t1Span, t2Span] = [numSpan(t1, 'highlight-remain'), numSpan(t2, 'highlight-remain')];
+        const [u1Span, u2Span] = [numSpan(u1, 'highlight-ten'), numSpan(u2, 'highlight-ten')];
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+
+        let t = '➕ 同位相加法 (不进位)';
+        let s = `<div class="modal-step">${stepContent('步骤 1: 个位加个位', `：💪 个位上的 ${u1Span} 加上 ${u2Span}，得到 ${numSpan(uSum, 'highlight-goal')}。`)}</div>`;
+        if (t1 > 0 || t2 > 0) {
+            s += `<div class="modal-step">${stepContent('步骤 2: 十位加十位', `：🧠 十位上的 ${t1Span} 加上 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
+        }
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // 凑十法步骤
+    function getCouShiSteps(n1, n2, res) {
+        const big = Math.max(n1, n2); const small = Math.min(n1, n2);
+        const bigUnit = big % 10, need = 10 - bigUnit, rem = small - need;
+        const [needSpan, remSpan] = [numSpan(need, 'highlight-ten'), numSpan(rem, 'highlight-remain')];
+        const [bigSpan, smallSpan] = [numSpan(big, 'highlight-goal'), numSpan(small, 'highlight-ten')];
+        const nextTen = big + need, nextTenSpan = numSpan(nextTen, 'highlight-goal');
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+
+        const t = '✨ 凑十法魔法拆分';
+        let s = `<div class="modal-step">${stepContent('步骤 1: 找朋友凑 10', `：🙋 大数 ${bigSpan} 的个位 (${numSpan(bigUnit,'highlight-goal')}) 需要找 ${need} 才能凑到下一个整十数 ${nextTenSpan}。`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 2: 小数拆分', `：✂️ 小数 ${smallSpan} 愿意把自己拆成 ${needSpan} (给朋友) 和 ${remSpan} (剩下的)。`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 3: 魔法合体', `：🚀 先让 ${nextTenSpan} 变出来，再把剩下的 ${remSpan} 加上去！`)}</div>`;
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('+')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${bigSpan} ${opRedSpan('+')} ${needSpan} ${parenRedSpan(')')} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${nextTenSpan} ${opRedSpan('+')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // 同位相减法 (不破十) 步骤
+    function getNoBreakSubSteps(n1, n2, res) {
+        const u1 = n1 % 10, u2 = n2 % 10;
+        const t1 = Math.floor(n1 / 10), t2 = Math.floor(n2 / 10);
+        const tRes = t1 - t2; const uRes = u1 - u2;
+        const [t1Span, t2Span] = [numSpan(t1, 'highlight-remain'), numSpan(t2, 'highlight-remain')];
+        const [u1Span, u2Span] = [numSpan(u1, 'highlight-ten'), numSpan(u2, 'highlight-ten')];
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+
+        let t = '✅ 同位相减法 (不破十)';
+        let s = `<div class="modal-step">${stepContent('步骤 1: 个位减个位', `：💪 个位上的 ${u1Span} 减去 ${u2Span}，得到 ${numSpan(uRes, 'highlight-goal')}。`)}</div>`;
+        if (t2 > 0) {
+            s += `<div class="modal-step">${stepContent('步骤 2: 十位减十位', `：🧠 十位上的 ${t1Span} 减去 ${t2Span}，得到 ${numSpan(tRes, 'highlight-goal')}。`)}</div>`;
+        } else if (t1 > 0 && t2 === 0) {
+            s += `<div class="modal-step">${stepContent('步骤 2: 保留十位', `：🧠 减数没有十位，保留 ${t1Span} (1个十)。`)}</div>`;
+        }
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // 借十法 (破十法, 20以内) 步骤
+    function getJieShiSteps(n1, n2, res) {
+        const u1 = n1 % 10;
+        const tMinusN2 = 10 - n2;
+        const [u1Span, tMinusN2Span] = [numSpan(u1, 'highlight-remain'), numSpan(tMinusN2, 'highlight-goal')];
+        const tSpan = numSpan(10, 'highlight-goal');
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+
+        let t = '⚡ 借十法 (破十法)';
+        let s = `<div class="modal-step">${stepContent('步骤 1: 个位求助', `：😟 ${n1} 的个位 (${u1Span}) 太小了，减不掉 ${n2Red}！借一个 ${tSpan} 来帮忙！`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 2: 10 减去减数', `：💪 先让借来的 ${tSpan} 打败 那个 ${n2Red}，剩下 ${tMinusN2Span} 个。`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 3: 胜利会师', `：🥳 把 ${tMinusN2Span} 和个位上乖乖等着的 ${u1Span} 合并起来！`)}</div>`;
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${tSpan} ${opRedSpan('-')} ${n2Red} ${parenRedSpan(')')} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${tMinusN2Span} ${opRedSpan('+')} ${u1Span} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // 平十法 (连减法, 20以上破十) 步骤
+    function getPingShiSteps(n1, n2, res) {
+        const u1 = n1 % 10;
+        const rem = n2 - u1;
+        const tenRem = n1 - u1;
+        const [n1Red, n2Red, resRed] = [numRedSpan(n1), numRedSpan(n2), numRedSpan(res)];
+        const [remSpan, tenRemSpan] = [numSpan(rem, 'highlight-remain'), numSpan(tenRem, 'highlight-goal')];
+        const u1Span = numSpan(u1, 'highlight-ten');
+
+        let t = '📏 平十法 (连减法)';
+        let s = `<div class="modal-step">${stepContent('步骤 1: 拆分减数', `：✂️ 把 ${n2Red} 拆成 ${u1Span} (和 ${n1} 的个位相等) 和 ${remSpan} (剩下的)。`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 2: 先减个位', `：💪 ${n1Red} 先减去 ${u1Span}，得到整十数 ${tenRemSpan}。`)}</div>`;
+        s += `<div class="modal-step">${stepContent('步骤 3: 再减剩余', `：🏃 用 ${tenRemSpan} 再减去剩下的 ${remSpan}。`)}</div>`;
+        const formulaHTML = `<span class="formula">${n1Red} ${opRedSpan('-')} ${n2Red} ${opRedSpan('=')} ${parenRedSpan('(')} ${n1Red} ${opRedSpan('-')} ${u1Span} ${parenRedSpan(')')} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${tenRemSpan} ${opRedSpan('-')} ${remSpan} ${opRedSpan('=')} ${resRed}</span>`;
+        return { title: t, stepsHTML: s, formula: formulaHTML };
+    }
+
+    // Function to determine the best subtraction method for a hint
+    function getSubtractionMethod(n1, n2) {
+        const res = n1 - n2;
+        const u1 = n1 % 10, u2 = n2 % 10;
+        const isBreakTen = n1 > 10 && u2 > u1;
+        const isNoBreakSub = n1 > 10 && u2 <= u1;
+        const isSimpleSub = n1 <= 10 || (n1 > 10 && (n2 % 10 === 0 || res % 10 === 0));
+
+        if (isSimpleSub) return { mode: 'basic', func: (a, b, r) => getBasicSteps(a, b, '-', r, '基础减法') };
+        if (isNoBreakSub) return { mode: 'noBreakSub', func: getNoBreakSubSteps };
+        // 由于 maxNum=20, 这里只可能是 JieShi
+        if (isBreakTen && n1 <= 20) return { mode: 'jieShi', func: getJieShiSteps };
+        if (isBreakTen) return { mode: 'pingShi', func: getPingShiSteps };
+
+        return { mode: 'basic', func: (a, b, r) => getBasicSteps(a, b, '-', r, '基础减法') };
+    }
+
+    // 提示逻辑总调度
+    function getSingleOpHintSteps(n1, n2, op, forcedMode = null, unknownPos = 'res') {
+        const res = op === '+' ? n1 + n2 : n1 - n2;
+        const effectiveMode = forcedMode || currentProblem.specificMode;
+
+        let t = '', s = '', formulaHTML = '';
+        let calculationDetails = {};
+
+        // --- 1. 求解未知数逻辑 (? op B = C) 或 (A op ? = C) ---
+        if (unknownPos === 'n1' || unknownPos === 'n2') {
+            const n1Known = unknownPos === 'n2' ? n1 : n2; // The known non-result number (A or B)
+            const n2Answer = unknownPos === 'n2' ? n2 : n1; // The calculated unknown number (?=A or ?=B)
+            const knownResult = n1Known + (op === '+' ? n2Answer : -n2Answer); // C (the result displayed)
+
+            let subN1, subN2, conversionText, conversionOp = '-';
+
+            if (op === '-') {
+                if (unknownPos === 'n1') { // ? - B = C -> ? = C + B (加法)
+                    subN1 = knownResult; subN2 = n1Known; conversionOp = '+';
+                    t = '🧮 求解未知被减数 (? = C + B)';
+                    conversionText = `：🔍 未知数 (?) 减去 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **加上** ${numRedSpan(n1Known)}。`;
+
+                    const u1 = subN1 % 10, u2 = subN2 % 10;
+                    const isCouShi = u1 + u2 > 9;
+                    const addFunc = isCouShi ? getCouShiSteps : getNoCarryAddSteps;
+                    calculationDetails = addFunc(subN1, subN2, n2Answer);
+
+                } else { // unknownPos === 'n2', A - ? = C -> ? = A - C (减法)
+                    subN1 = n1; subN2 = knownResult;
+                    t = '🧮 求解未知减数 (? = A - C)';
+                    conversionText = `：🔍 ${numRedSpan(n1)} 减去未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(n1)} **减去** ${numRedSpan(knownResult)}。`;
                     const { func: subFunc } = getSubtractionMethod(subN1, subN2);
                     calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
                 }
-                
-                const calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796\s\u2705]/g, '').trim();
-
-                // 步骤 1: 关系转换
-                s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
-                
-                // 【修正】将转换公式直接插入到步骤 1 之后
-                const conversionFormula = `<span class="formula conversion-formula fade-start">${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)} ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}</span>`;
-                s += conversionFormula; 
-
-                // 修正：重新编号计算步骤 (从 步骤 2 开始)
-                let calcStepsHtml = calculationDetails.stepsHTML;
-                let continuousStepNumber = 2; 
-                // 正则表达式匹配 '<strong>步骤 X:' 并替换为连续编号
-                calcStepsHtml = calcStepsHtml.replace(/<strong>步骤 \d:/g, () => {
-                    return `<strong>步骤 ${continuousStepNumber++}:`;
-                });
-                s += calcStepsHtml; // 追加重新编号后的步骤
-
-                t += ` (计算使用：${calculationTitle})`; 
-
-                let calculationFormula = calculationDetails.formula; 
-                calculationFormula = calculationFormula.replace(/<span class="formula">/g, '<span class="formula" style="margin-top: 0;">');
-
-                // 【修正】最终 formulaHTML 只包含计算公式（将被放在最底部）
-                formulaHTML = calculationFormula; 
-                return { title: t, stepsHTML: s, formula: formulaHTML }; 
-            }
-            
-            // --- 2. 标准运算逻辑 (A op B = ?) ---
-            if (op === '+') {
-                const u1 = n1 % 10, u2 = n2 % 10;
-                const isCouShi = u1 + u2 > 9; 
-                
-                if (effectiveMode === 'couShi' && isCouShi) return getCouShiSteps(n1, n2, res);
-                if (effectiveMode === 'noCarryAdd' && !isCouShi) return getNoCarryAddSteps(n1, n2, res);
-                if (isCouShi) return getCouShiSteps(n1, n2, res);
-                return getNoCarryAddSteps(n1, n2, res); 
-                
-            } else if (op === '-') { 
-                const u1 = n1 % 10, u2 = n2 % 10;
-                const isBreakTen = n1 > 10 && u2 > u1; 
-                
-                if (isBreakTen && effectiveMode === 'jieShi' && n1 <= 20) return getJieShiSteps(n1, n2, res);
-                if (isBreakTen && effectiveMode === 'pingShi') return getPingShiSteps(n1, n2, res);
-                if (effectiveMode === 'noBreakSub' && !isBreakTen) return getNoBreakSubSteps(n1, n2, res);
-                
-                if (isBreakTen && n1 <= 20) return getJieShiSteps(n1, n2, res);
-                if (isBreakTen) return getPingShiSteps(n1, n2, res);
-                return getNoBreakSubSteps(n1, n2, res); 
+            } else if (op === '+') {
+                // ? + B = C OR A + ? = C -> ? = C - B OR ? = C - A (减法)
+                subN1 = knownResult; subN2 = n1Known;
+                if (unknownPos === 'n1') {
+                    t = '🧮 求解未知加数 (? = C - B)';
+                    conversionText = `：🔍 未知数 (?) 加上 ${numRedSpan(n1Known)} 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
+                } else { // unknownPos === 'n2'
+                    t = '🧮 求解未知加数 (? = C - A)';
+                    conversionText = `：🔍 ${numRedSpan(n1Known)} 加上未知数 (?) 等于 ${numRedSpan(knownResult)}，所以未知数 (?) 等于 ${numRedSpan(knownResult)} **减去** ${numRedSpan(n1Known)}。`;
+                }
+                const { func: subFunc } = getSubtractionMethod(subN1, subN2);
+                calculationDetails = subFunc(subN1, subN2, subN1 - subN2);
             }
 
-            return getBasicSteps(n1, n2, op, res);
+            const calculationTitle = calculationDetails.title.replace(/[\u2728\u2559\u26a1\u25b6\u2796\s\u2705]/g, '').trim();
+
+            // 步骤 1: 关系转换
+            s = `<div class="modal-step">${stepContent('步骤 1: 关系转换', conversionText.replace(/：🔍/, ''))}</div>`;
+
+            // 【修正】将转换公式直接插入到步骤 1 之后
+            const conversionFormula = `<span class="formula conversion-formula fade-start">${numRedSpan(unknownPos === 'n1' ? '?' : n1)} ${opRedSpan(op)} ${numRedSpan(unknownPos === 'n2' ? '?' : n2)} ${opRedSpan('=')} ${knownResult} ${opRedSpan('→')} ${numRedSpan('?')} ${opRedSpan('=')} ${numRedSpan(subN1)} ${opRedSpan(conversionOp)} ${numRedSpan(subN2)}</span>`;
+            s += conversionFormula;
+
+            // 修正：重新编号计算步骤 (从 步骤 2 开始)
+            let calcStepsHtml = calculationDetails.stepsHTML;
+            let continuousStepNumber = 2;
+            // 正则表达式匹配 '<strong>步骤 X:' 并替换为连续编号
+            calcStepsHtml = calcStepsHtml.replace(/<strong>步骤 \d:/g, () => {
+                return `<strong>步骤 ${continuousStepNumber++}:`;
+            });
+            s += calcStepsHtml; // 追加重新编号后的步骤
+
+            t += ` (计算使用：${calculationTitle})`;
+
+            let calculationFormula = calculationDetails.formula;
+            calculationFormula = calculationFormula.replace(/<span class="formula">/g, '<span class="formula" style="margin-top: 0;">');
+
+            // 【修正】最终 formulaHTML 只包含计算公式（将被放在最底部）
+            formulaHTML = calculationFormula;
+            return { title: t, stepsHTML: s, formula: formulaHTML };
         }
 
-        // --- 模态框和报告逻辑 (调整调用参数) ---
-        function generateHintSteps(problem, problemIndex = null) {
-            const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = problem;
-            let s = '', finalFormula = '';
-            hintModal.style.display = 'block';
-            hintVisuals.innerHTML = ''; 
+        // --- 2. 标准运算逻辑 (A op B = ?) ---
+        if (op === '+') {
+            const u1 = n1 % 10, u2 = n2 % 10;
+            const isCouShi = u1 + u2 > 9;
 
-            // --- 1. 核心画图逻辑 (保持不变) ---
-            if (num3 !== null && num3 !== undefined) {
-                renderVisualHelpers(hintVisuals, num1, num2, operator1);
-            } else if (unknownPosition === 'n1' || unknownPosition === 'n2') {
-                const n1Known = unknownPosition === 'n2' ? num1 : num2; 
-                const n2Answer = unknownPosition === 'n2' ? num2 : num1;
-                const knownResult = n1Known + (operator1 === '+' ? n2Answer : -n2Answer); 
-                
-                let subN1, subN2, visOp; 
+            if (effectiveMode === 'couShi' && isCouShi) return getCouShiSteps(n1, n2, res);
+            if (effectiveMode === 'noCarryAdd' && !isCouShi) return getNoCarryAddSteps(n1, n2, res);
+            if (isCouShi) return getCouShiSteps(n1, n2, res);
+            return getNoCarryAddSteps(n1, n2, res);
 
-                if (operator1 === '-') {
-                    if (unknownPosition === 'n1') { subN1 = knownResult; subN2 = n1Known; visOp = '+'; } 
-                    else { subN1 = num1; subN2 = knownResult; visOp = '-'; }
-                } else if (operator1 === '+') { 
-                    subN1 = knownResult; subN2 = n1Known; visOp = '-';
-                }
-                renderVisualHelpers(hintVisuals, subN1, subN2, visOp); 
-            } else {
-                renderVisualHelpers(hintVisuals, num1, num2, operator1); 
+        } else if (op === '-') {
+            const u1 = n1 % 10, u2 = n2 % 10;
+            const isBreakTen = n1 > 10 && u2 > u1;
+
+            if (isBreakTen && effectiveMode === 'jieShi' && n1 <= 20) return getJieShiSteps(n1, n2, res);
+            if (isBreakTen && effectiveMode === 'pingShi') return getPingShiSteps(n1, n2, res);
+            if (effectiveMode === 'noBreakSub' && !isBreakTen) return getNoBreakSubSteps(n1, n2, res);
+
+            if (isBreakTen && n1 <= 20) return getJieShiSteps(n1, n2, res);
+            if (isBreakTen) return getPingShiSteps(n1, n2, res);
+            return getNoBreakSubSteps(n1, n2, res);
+        }
+
+        return getBasicSteps(n1, n2, op, res);
+    }
+
+    // --- 模态框和报告逻辑 (调整调用参数) ---
+    function generateHintSteps(problem, problemIndex = null) {
+        const { num1, num2, operator1, num3, operator2, answer, unknownPosition, specificMode } = problem;
+        let s = '', finalFormula = '';
+        hintModal.style.display = 'block';
+        hintVisuals.innerHTML = '';
+
+        // --- 1. 核心画图逻辑 (保持不变) ---
+        if (num3 !== null && num3 !== undefined) {
+            renderVisualHelpers(hintVisuals, num1, num2, operator1);
+        } else if (unknownPosition === 'n1' || unknownPosition === 'n2') {
+            const n1Known = unknownPosition === 'n2' ? num1 : num2;
+            const n2Answer = unknownPosition === 'n2' ? num2 : num1;
+            const knownResult = n1Known + (operator1 === '+' ? n2Answer : -n2Answer);
+
+            let subN1, subN2, visOp;
+
+            if (operator1 === '-') {
+                if (unknownPosition === 'n1') { subN1 = knownResult; subN2 = n1Known; visOp = '+'; }
+                else { subN1 = num1; subN2 = knownResult; visOp = '-'; }
+            } else if (operator1 === '+') {
+                subN1 = knownResult; subN2 = n1Known; visOp = '-';
             }
-            // --- 结束：核心画图逻辑 ---
+            renderVisualHelpers(hintVisuals, subN1, subN2, visOp);
+        } else {
+            renderVisualHelpers(hintVisuals, num1, num2, operator1);
+        }
+        // --- 结束：核心画图逻辑 ---
 
 
-            // --- 2. 步骤和公式生成 (更新：处理连续运算) ---
-            if (num3 !== null && num3 !== undefined) {
-                const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
-                const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null, 'res'); 
-                hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`; 
-                s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`; 
-                s += firstStepDetails.stepsHTML; 
-                s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
-                const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, null, 'res'); 
-                s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`; 
-                s += secondStepDetails.stepsHTML; 
-                finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
-            } else {
-                // 标准或未知数问题
-                const originalProblem = currentProblem;
-                currentProblem = problem;
-                const details = getSingleOpHintSteps(num1, num2, operator1, specificMode, unknownPosition);
-                currentProblem = originalProblem;
-                hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`; 
-                s = details.stepsHTML;
-                finalFormula = details.formula;
+        // --- 2. 步骤和公式生成 (更新：处理连续运算) ---
+        if (num3 !== null && num3 !== undefined) {
+            const iR = operator1 === '+' ? num1 + num2 : num1 - num2;
+            const firstStepDetails = getSingleOpHintSteps(num1, num2, operator1, null, 'res');
+            hintModalTitle.textContent = `💡 第${problemIndex !== null ? problemIndex + 1 : '当前'}题 - 连续运算分步解析 (第一步：${firstStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`;
+            s += `<div class="modal-step" style="border-left: 4px solid var(--color-apple-orange);">${stepContent('第一步计算', `：${num1} ${operator1} ${num2}`)}</div>`;
+            s += firstStepDetails.stepsHTML;
+            s += `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan('=')} ${numRedSpan(iR)}</span>`;
+            const secondStepDetails = getSingleOpHintSteps(iR, num3, operator2, null, 'res');
+            s += `<div class="modal-step">${stepContent('第二步计算', `：${iR} ${operator2} ${num3} (方法：${secondStepDetails.title.replace(/[\u2728\u2559\u26a1]/g, '').trim()})`)}</div>`;
+            s += secondStepDetails.stepsHTML;
+            finalFormula = `<span class="formula">${numRedSpan(num1)} ${opRedSpan(operator1)} ${numRedSpan(num2)} ${opRedSpan(operator2)} ${numRedSpan(num3)} ${opRedSpan('=')} ${numRedSpan(answer)}</span>`;
+        } else {
+            // 标准或未知数问题
+            const originalProblem = currentProblem;
+            currentProblem = problem;
+            const details = getSingleOpHintSteps(num1, num2, operator1, specificMode, unknownPosition);
+            currentProblem = originalProblem;
+            hintModalTitle.textContent = `💡 ${problemIndex !== null ? '第' + (problemIndex + 1) + '题 - ' : ''}${details.title}`;
+            s = details.stepsHTML;
+            finalFormula = details.formula;
+        }
+
+        // --- 3. 动画逻辑 (更新，实现公式分步淡入) ---
+        // 将最终计算公式内容包裹在带 'fade-start' 类的 span 中，并添加到 steps HTML 之后
+        hintModalSteps.innerHTML = s + `<span id="finalFormulaWrapper" class="formula fade-start">${finalFormula.replace(/<span class="formula">/g, '').replace(/<\/span>/g, '')}</span>`;
+
+        // 【新选择器】选择所有需要按顺序淡入的元素：modal-step 和 conversion-formula (如果存在)
+        const allItems = Array.from(hintModalSteps.querySelectorAll('.modal-step, .conversion-formula'));
+        const calculationFormulaWrapper = getElementByIdSafe('finalFormulaWrapper');
+
+        // 初始化所有 item 的动画状态（公式需要额外设置 opacity 和 transform）
+        allItems.forEach(item => {
+            item.classList.add('fade-start');
+            if (item.classList.contains('formula')) {
+                item.style.opacity = 0;
+                item.style.transform = 'translateY(10px)';
             }
-            
-            // --- 3. 动画逻辑 (更新，实现公式分步淡入) ---
-            // 将最终计算公式内容包裹在带 'fade-start' 类的 span 中，并添加到 steps HTML 之后
-            hintModalSteps.innerHTML = s + `<span id="finalFormulaWrapper" class="formula fade-start">${finalFormula.replace(/<span class="formula">/g, '').replace(/<\/span>/g, '')}</span>`; 
-            
-            // 【新选择器】选择所有需要按顺序淡入的元素：modal-step 和 conversion-formula (如果存在)
-            const allItems = Array.from(hintModalSteps.querySelectorAll('.modal-step, .conversion-formula'));
-            const calculationFormulaWrapper = getElementByIdSafe('finalFormulaWrapper');
-            
-            // 初始化所有 item 的动画状态（公式需要额外设置 opacity 和 transform）
-            allItems.forEach(item => {
-                item.classList.add('fade-start');
-                if (item.classList.contains('formula')) {
-                    item.style.opacity = 0; 
-                    item.style.transform = 'translateY(10px)';
-                }
-            });
-            
-            // 动画顺序播放
-            let totalDelay = 0;
-            const delay = 450;
-            
-            allItems.forEach((item, index) => {
-                totalDelay += delay;
-                setTimeout(() => { 
-                    item.classList.remove('fade-start'); 
-                    item.classList.add('fade-end');
-                    item.style.opacity = 1; 
-                    item.style.transform = 'translateY(0)'; 
-                }, 100 + index * delay);
-            });
-            
-            // 最终计算公式淡入
+        });
+
+        // 动画顺序播放
+        let totalDelay = 0;
+        const delay = 450;
+
+        allItems.forEach((item, index) => {
+            totalDelay += delay;
             setTimeout(() => {
-                calculationFormulaWrapper.classList.remove('fade-start');
-                calculationFormulaWrapper.style.opacity = 1;
-                calculationFormulaWrapper.style.transform = 'translateY(0)';
-            }, 100 + allItems.length * delay + 200); // 额外的 200ms 延迟确保最后一步完成
-        }
-        
-        // --- 模态框和报告逻辑 (保持不变) ---
-        const closeHintModal = () => { hintModal.style.display = 'none'; };
-        const closeExamModal = () => { examModal.style.display = 'none'; switchMode(modeSelect.value); };
-        const showCurrentHint = () => {
-            if (isExamMode) { feedbackEl.textContent = '考试中不能使用提示哦！'; wrongFlash(); return; }
-            generateHintSteps(currentProblem);
-        };
-        const showProblemHint = (index) => {
-            const problemData = examProblems[index];
-            currentProblem = problemData; 
-            if (problemData) generateHintSteps(problemData, index);
-        };
-        
-        function generateReportImage() {
-            const reportEl = getElementByIdSafe('examReportContent');
-            if (typeof html2canvas === 'undefined' || !html2canvas) { alert('图片生成库加载失败。'); return; }
-            const actionsDiv = reportEl.querySelector('.report-actions');
-            actionsDiv.classList.add('hide-for-capture');
-            html2canvas(reportEl, { scale: 3, useCORS: true, backgroundColor: '#ffffff', allowTaint: true, removeContainer: true }).then(canvas => {
-                actionsDiv.classList.remove('hide-for-capture');
-                const imgURL = canvas.toDataURL('image/png');
-                const a = document.createElement('a');
-                const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
-                const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ''); 
-                a.download = `数学测试成绩_${score.toFixed(0)}分_${today}.png`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            }).catch(error => {
-                actionsDiv.classList.remove('hide-for-capture');
-                console.error('Error generating image:', error);
-                alert('生成图片失败。');
-            });
-        }
+                item.classList.remove('fade-start');
+                item.classList.add('fade-end');
+                item.style.opacity = 1;
+                item.style.transform = 'translateY(0)';
+            }, 100 + index * delay);
+        });
 
-        function endExam() {
-            submitBtn.disabled = true; 
-            isSubmitting = false; 
+        // 最终计算公式淡入
+        setTimeout(() => {
+            calculationFormulaWrapper.classList.remove('fade-start');
+            calculationFormulaWrapper.style.opacity = 1;
+            calculationFormulaWrapper.style.transform = 'translateY(0)';
+        }, 100 + allItems.length * delay + 200); // 额外的 200ms 延迟确保最后一步完成
+    }
+
+    // --- 模态框和报告逻辑 (保持不变) ---
+    const closeHintModal = () => { hintModal.style.display = 'none'; };
+    const closeExamModal = () => { examModal.style.display = 'none'; switchMode(modeSelect.value); };
+    const showCurrentHint = () => {
+        if (isExamMode) { feedbackEl.textContent = '考试中不能使用提示哦！'; wrongFlash(); return; }
+        generateHintSteps(currentProblem);
+    };
+    const showProblemHint = (index) => {
+        const problemData = examProblems[index];
+        currentProblem = problemData;
+        if (problemData) generateHintSteps(problemData, index);
+    };
+
+    function generateReportImage() {
+        const reportEl = getElementByIdSafe('examReportContent');
+        if (typeof html2canvas === 'undefined' || !html2canvas) { alert('图片生成库加载失败。'); return; }
+        const actionsDiv = reportEl.querySelector('.report-actions');
+        actionsDiv.classList.add('hide-for-capture');
+        html2canvas(reportEl, { scale: 3, useCORS: true, backgroundColor: '#ffffff', allowTaint: true, removeContainer: true }).then(canvas => {
+            actionsDiv.classList.remove('hide-for-capture');
+            const imgURL = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
             const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
-            const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-            examModalTitle.textContent = '💯 数学快速测试卷';
-            let problemListHTML = examProblems.map((p, index) => {
-                const correctAnswerDisplay = (p.answer === undefined || p.answer === null || isNaN(p.answer)) ? '??' : p.answer;
-                let problemText = '';
-                let resultC;
+            const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '');
+            a.download = `数学测试成绩_${score.toFixed(0)}分_${today}.png`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }).catch(error => {
+            actionsDiv.classList.remove('hide-for-capture');
+            console.error('Error generating image:', error);
+            alert('生成图片失败。');
+        });
+    }
 
-                if (p.num3 !== null && p.num3 !== undefined) {
-                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2} ${p.operator2} ${p.num3}`;
-                } else if (p.unknownPosition === 'res') {
-                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}`;
-                } else {
-                    resultC = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer); 
-                    if (p.unknownPosition === 'n1') {
-                         problemText = `${index + 1}. ? ${p.operator1} ${p.num2} = ${resultC}`;
-                    } else if (p.unknownPosition === 'n2') {
-                         problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${resultC}`;
-                    }
+    function endExam() {
+        submitBtn.disabled = true;
+        isSubmitting = false;
+        const score = (examCorrectAnswers / EXAM_TOTAL_QUESTIONS) * 100;
+        const today = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+        examModalTitle.textContent = '💯 数学快速测试卷';
+        let problemListHTML = examProblems.map((p, index) => {
+            const correctAnswerDisplay = (p.answer === undefined || p.answer === null || isNaN(p.answer)) ? '??' : p.answer;
+            let problemText = '';
+            let resultC;
+
+            if (p.num3 !== null && p.num3 !== undefined) {
+                problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2} ${p.operator2} ${p.num3}`;
+            } else if (p.unknownPosition === 'res') {
+                problemText = `${index + 1}. ${p.num1} ${p.operator1} ${p.num2}`;
+            } else {
+                resultC = p.num1 + (p.operator1 === '+' ? p.answer : -p.answer);
+                if (p.unknownPosition === 'n1') {
+                    problemText = `${index + 1}. ? ${p.operator1} ${p.num2} = ${resultC}`;
+                } else if (p.unknownPosition === 'n2') {
+                    problemText = `${index + 1}. ${p.num1} ${p.operator1} ? = ${resultC}`;
                 }
-                const isCorrect = p.userAnswer === p.answer; 
-                const [mark, markClass] = isCorrect ? ['✔️', ''] : ['❌', 'mark-wrong'];
-                const userAnswerDisplay = p.userAnswer === undefined || p.userAnswer === null || isNaN(p.userAnswer) ? '?' : p.userAnswer;
-                const userAnswerColor = isCorrect ? 'var(--color-text-dark)' : 'var(--color-apple-red)'; 
-                return `
+            }
+            const isCorrect = p.userAnswer === p.answer;
+            const [mark, markClass] = isCorrect ? ['✔️', ''] : ['❌', 'mark-wrong'];
+            const userAnswerDisplay = p.userAnswer === undefined || p.userAnswer === null || isNaN(p.userAnswer) ? '?' : p.userAnswer;
+            const userAnswerColor = isCorrect ? 'var(--color-text-dark)' : 'var(--color-apple-red)';
+            return `
                     <li class="problem-item">
                         <span class="problem-text">${problemText}</span>
                         <span class="user-answer-display" style="color: ${userAnswerColor};">${userAnswerDisplay}</span>
                         <span class="correct-answer-display">${!isCorrect ? `(正: ${correctAnswerDisplay})` : ''}</span>
                         <div class="problem-mark-group">
-                            ${!isCorrect ? `<button onclick="showProblemHint(${index});" class="btn-hint-review">💡</button>` : ''} 
+                            ${!isCorrect ? `<button onclick="showProblemHint(${index});" class="btn-hint-review">💡</button>` : ''}
                             <span class="problem-mark ${markClass}" style="color: ${isCorrect ? 'var(--color-apple-green)' : 'var(--color-apple-red)'};">${mark}</span>
                         </div>
                     </li>`;
-            }).join('');
-            examReportContent.innerHTML = `
+        }).join('');
+        examReportContent.innerHTML = `
                 <div class="exam-report-inner">
                     <div class="score-box">${score.toFixed(0)}</div>
                     <div class="report-header"><h3>小学一年级数学测试</h3></div>
@@ -1280,69 +1305,69 @@
                         <button onclick="examModal.style.display='none'; switchMode('mixed');" class="btn-secondary">返回练习模式</button>
                     </div>
                 </div>`;
-            examModal.style.display = 'block'; 
-            newProbBtn.disabled = false; hintBtn.disabled = false;
-            feedbackEl.textContent = `考试结束，得分 ${score.toFixed(0)} 分`; feedbackEl.className = 'feedback-correct';
-        }
+        examModal.style.display = 'block';
+        newProbBtn.disabled = false; hintBtn.disabled = false;
+        feedbackEl.textContent = `考试结束，得分 ${score.toFixed(0)} 分`; feedbackEl.className = 'feedback-correct';
+    }
 
-        // --- 答案检查和问题生成 ---
-        const checkAnswer = () => {
-            if (isSubmitting || (isExamMode && examCurrentQuestion >= EXAM_TOTAL_QUESTIONS)) { return; }
-            const uA = parseInt(ansInput.value.trim());
-            const eA = currentProblem.answer;
-            if (isNaN(uA)) { feedbackEl.textContent = '请先输入数字答案！'; wrongFlash(); return; }
-            ansInput.classList.remove('wrong-flash');
-            isSubmitting = true; submitBtn.disabled = true; 
-            const problemSnapshot = { ...currentProblem, userAnswer: uA }; 
+    // --- 答案检查和问题生成 ---
+    const checkAnswer = () => {
+        if (isSubmitting || (isExamMode && examCurrentQuestion >= EXAM_TOTAL_QUESTIONS)) { return; }
+        const uA = parseInt(ansInput.value.trim());
+        const eA = currentProblem.answer;
+        if (isNaN(uA)) { feedbackEl.textContent = '请先输入数字答案！'; wrongFlash(); return; }
+        ansInput.classList.remove('wrong-flash');
+        isSubmitting = true; submitBtn.disabled = true;
+        const problemSnapshot = { ...currentProblem, userAnswer: uA };
 
-            if (isExamMode) {
-                const isC = uA === eA;
-                if (isC) examCorrectAnswers++;
-                // 【已修复 BUG】不再使用 push() 导致数组内容翻倍，而是替换当前索引位置的对象
-                examProblems[examCurrentQuestion] = problemSnapshot; 
-                examCurrentQuestion++;
-                setTimeout(() => { 
-                    if (examCurrentQuestion < EXAM_TOTAL_QUESTIONS) { generateProblem(true); isSubmitting = false; submitBtn.disabled = false; } 
-                    else { endExam(); }
-                }, 500); 
+        if (isExamMode) {
+            const isC = uA === eA;
+            if (isC) examCorrectAnswers++;
+            // 【已修复 BUG】不再使用 push() 导致数组内容翻倍，而是替换当前索引位置的对象
+            examProblems[examCurrentQuestion] = problemSnapshot;
+            examCurrentQuestion++;
+            setTimeout(() => {
+                if (examCurrentQuestion < EXAM_TOTAL_QUESTIONS) { generateProblem(true); isSubmitting = false; submitBtn.disabled = false; }
+                else { endExam(); }
+            }, 500);
+        } else {
+            totalCount++;
+            if (uA === eA) {
+                correctCount++; feedbackEl.textContent = '✅ 太棒了！回答正确！ 🎉'; feedbackEl.className = 'feedback-correct';
+                vfx();
+                setTimeout(() => { submitBtn.disabled = false; generateProblem(true); isSubmitting = false; }, 2000);
             } else {
-                totalCount++;
-                if (uA === eA) {
-                    correctCount++; feedbackEl.textContent = '✅ 太棒了！回答正确！ 🎉'; feedbackEl.className = 'feedback-correct';
-                    vfx();
-                    setTimeout(() => { submitBtn.disabled = false; generateProblem(true); isSubmitting = false; }, 2000);
-                } else {
-                    wrongCount++; feedbackEl.textContent = `❌ 错了，正确答案是 ${eA} ❌`; feedbackEl.className = 'feedback-wrong'; wrongFlash();
-                    isSubmitting = false; submitBtn.disabled = false; 
-                }
-                cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
+                wrongCount++; feedbackEl.textContent = `❌ 错了，正确答案是 ${eA} ❌`; feedbackEl.className = 'feedback-wrong'; wrongFlash();
+                isSubmitting = false; submitBtn.disabled = false;
             }
-        };
-        
-        const skipProblem = () => { feedbackEl.textContent = ''; feedbackEl.className = ''; generateProblem(false); }
-        
-        function setButtonMode() {
-            const isMobile = window.matchMedia("(max-width: 600px)").matches;
-            const btnTxt = newProbBtn.querySelector('.button-text');
-            if (btnTxt) { newProbBtn.classList.toggle('icon-mode', !isMobile); btnTxt.style.display = isMobile ? 'inline-block' : 'none'; }
+            cCntEl.textContent = correctCount; wCntEl.textContent = wrongCount; tCntEl.textContent = totalCount;
         }
-        
-        // --- 绑定事件监听器 (保持不变) ---
-        submitBtn.addEventListener('click', checkAnswer); hintBtn.addEventListener('click', showCurrentHint);
-        newProbBtn.addEventListener('click', skipProblem); 
-        modeSelect.addEventListener('change', () => switchMode(modeSelect.value));
-        hintModalClose.addEventListener('click', closeHintModal);
-        examModalClose.addEventListener('click', closeExamModal);
-        window.addEventListener('click', (e) => { if (e.target === hintModal) closeHintModal(); if (e.target === examModal) closeExamModal(); });
-        ansInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
-        window.addEventListener('resize', setButtonMode); 
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', (e) => {
-            const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now;
-        }, { passive: false });
+    };
 
-        setButtonMode(); 
-        switchMode(modeSelect.value || 'jieShi'); 
-    </script>
+    const skipProblem = () => { feedbackEl.textContent = ''; feedbackEl.className = ''; generateProblem(false); }
+
+    function setButtonMode() {
+        const isMobile = window.matchMedia("(max-width: 600px)").matches;
+        const btnTxt = newProbBtn.querySelector('.button-text');
+        if (btnTxt) { newProbBtn.classList.toggle('icon-mode', !isMobile); btnTxt.style.display = isMobile ? 'inline-block' : 'none'; }
+    }
+
+    // --- 绑定事件监听器 (保持不变) ---
+    submitBtn.addEventListener('click', checkAnswer); hintBtn.addEventListener('click', showCurrentHint);
+    newProbBtn.addEventListener('click', skipProblem);
+    modeSelect.addEventListener('change', () => switchMode(modeSelect.value));
+    hintModalClose.addEventListener('click', closeHintModal);
+    examModalClose.addEventListener('click', closeExamModal);
+    window.addEventListener('click', (e) => { if (e.target === hintModal) closeHintModal(); if (e.target === examModal) closeExamModal(); });
+    ansInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
+    window.addEventListener('resize', setButtonMode);
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now;
+    }, { passive: false });
+
+    setButtonMode();
+    switchMode(modeSelect.value || 'jieShi');
+</script>
 </body>
 </html>
