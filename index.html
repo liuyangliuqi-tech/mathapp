@@ -112,7 +112,7 @@
             #newProblemButton .button-text { display: inline-block; }
         }
         #feedback { font-size: clamp(18px, 3vw, 22px); font-weight: 700; color: var(--color-text-dark); min-height: 4vh; }
-        .feedback-correct { color: var(--color-apple-green); }
+        .feedback-correct { color: var(--color-apple-red); } /* 更改为红色 */
         .feedback-wrong { color: var(--color-apple-red); }
         .vfx-container {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -288,8 +288,7 @@
             width: 25px; height: 25px; font-size: 14px; line-height: 25px; padding: 0;
             cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); flex-shrink: 0;
         }
-        .problem-mark { font-size: 30px; font-weight: 900; font-family: Arial, sans-serif; line-height: 1; flex-shrink: 0; }
-        .mark-wrong { color: #ff3b30; }
+        .problem-mark { font-size: 36px; font-weight: 900; font-family: Arial, sans-serif; line-height: 1; flex-shrink: 0; }
         .report-actions { display: flex; justify-content: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
         .report-actions button {
             padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
@@ -299,6 +298,17 @@
         .btn-secondary { background-color: var(--color-apple-orange); color: white; }
         .btn-download { background-color: var(--color-apple-green); color: white; }
         .hide-for-capture { display: none; }
+
+
+        /* 彻底终结绿色对号！*/
+        /* 确保正确答案标记 (对号) 为红色 - 终极修复 */
+        .problem-mark,
+        .problem-mark.mark-correct-red,
+        .problem-mark.mark-wrong {
+            color: #ff3b30 !important; /* 使用直接红色 Hex 值 */
+            -webkit-text-fill-color: #ff3b30 !important; /* 强制 WebKit/iOS 浏览器渲染颜色 */
+            -webkit-text-stroke-width: 0 !important; /* 消除可能的描边，确保纯色 */
+        }
 
     </style>
 </head>
@@ -1376,17 +1386,17 @@
                 }
             }
             const isCorrect = p.userAnswer === p.answer;
-            const [mark, markClass] = isCorrect ? ['✔️', ''] : ['❌', 'mark-wrong'];
+            // 修改后的代码
+            const [mark, markClass] = isCorrect ? ['✓', 'mark-correct-red'] : ['✗', 'mark-wrong']; // 将粗体的 '❌' 替换为细线条的 '✗'
             const userAnswerDisplay = p.userAnswer === undefined || p.userAnswer === null || isNaN(p.userAnswer) ? '?' : p.userAnswer;
             const userAnswerColor = isCorrect ? 'var(--color-text-dark)' : 'var(--color-apple-red)';
             return `
                     <li class="problem-item">
                         <span class="problem-text">${problemText}</span>
                         <span class="user-answer-display" style="color: ${userAnswerColor};">${userAnswerDisplay}</span>
-                        <span class="correct-answer-display">${!isCorrect ? `(正: ${correctAnswerDisplay})` : ''}</span>
+                        <span class="correct-answer-display">${!isCorrect ? `(正: ${correctAnswerDisplay})<button onclick="showProblemHint(${index});" class="btn-hint-review">💡</button>` : ''}</span>
                         <div class="problem-mark-group">
-                            ${!isCorrect ? `<button onclick="showProblemHint(${index});" class="btn-hint-review">💡</button>` : ''}
-                            <span class="problem-mark ${markClass}" style="color: ${isCorrect ? 'var(--color-apple-green)' : 'var(--color-apple-red)'};">${mark}</span>
+                            <span class="problem-mark ${isCorrect ? 'mark-correct-red' : 'mark-wrong'}">${mark}</span>
                         </div>
                     </li>`;
         }).join('');
